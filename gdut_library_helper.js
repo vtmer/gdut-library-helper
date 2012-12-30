@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name       GDUT library helper
-// @namespace  http://use.i.E.your.homepage/
+// @namespace  http://library.gdut.edu.cn
 // @version    0.0.1
-// @description  enter something useful
+// @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/subject/*
 // @copyright  2012, Link, hbc
 // @require http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
