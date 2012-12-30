@@ -1,0 +1,11 @@
+# GDUT library helper
+
+豆瓣读书条目显示馆藏，全国第三漂亮的图书馆书还是挺多的哦！
+
+## Author
+
+[@linkkingjay](https://github.com/linkkingjay)
+
+[@hbc](https://github.com/bcho)
+
+维生数工作室
