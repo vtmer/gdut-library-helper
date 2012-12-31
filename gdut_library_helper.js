@@ -16,7 +16,13 @@ var charset=["D2BB","B6A1","8140","C6DF","8141","8142","8143","CDF2","D5C9","C8F
 function str_encode(str) {
     var c, ret = '';
     var special_str = '!\"#$%&\'()*+,/:;<=>?@[\]^`{|}~%';
-    for (var i = 0;i < str.length;i++) { if (str.charCodeAt(i) >= 0x4e00) {
+    for (var i = 0;i < str.length;i++) {
+    	switch(str.charAt(i)){
+    		case "，":ret += "%a3%ac";continue;
+    		case "·" :ret += "%a1%a4";continue;
+    		default:break;
+    	}
+        if (str.charCodeAt(i) >= 0x4e00) {
             c = charset[str.charCodeAt(i) - 0x4e00];
             ret += '%' + c.slice(0, 2) + '%' + c.slice(-2);
         } else {
