@@ -32,40 +32,63 @@ function str_encode(str) {
     return ret;
 }
 
-var parse_query_results = function(resp) {
-    var html = resp.responseText;
+/* templating */
 
-    var info = $('#info');
+function result(buffer) {
     var template_begin = '<span class="pl">GDUT:</span> ';
     var template_end = '<br />';
 
-    var not_found = $('#searchnotfound', html);
-    if (not_found.length === 0) {
-        /* found the books */
-        var results = $('td.tbr', html);
-        var total = 0;
-        var remains = 0;
-        for (var i = 0;i < results.length;i += 3) {
-            total += parseInt($(results[i + 1]).text());
-            remains += parseInt($(results[i + 2]).text());
+    return template_begin + buffer + template_end;
+}
+
+function link(buffer_url, buffer_content) {
+    return '&nbsp;<a target=_blank href=' + buffer_url + '>' + buffer_content + '</a>';
+}
+
+
+function book_meta() {
+    var publisher = /出版社: (.*)/.exec($('#info').text());
+    if (publisher !== null)
+        publisher = publisher[1].trim();
+
+    return {
+        name: str_encode($('#wrapper h1 span').text()),
+        publisher: publisher
+    };
+}
+
+function parser_factory(meta, query_url) {
+    return function(resp) {
+        var html = resp.responseText;
+        var info = $('#info');
+
+        var not_found = $('#searchnotfound', html);
+        if (not_found.length === 0) {
+            /* found the books */
+            var results = $('td.tbr', html);
+            var total = 0;
+            var remains = 0;
+            for (var i = 0;i < results.length;i += 3) {
+                total += parseInt($(results[i + 1]).text());
+                remains += parseInt($(results[i + 2]).text());
+            }
+
+            info.append(result(link(query_url, remains + '/' + total)));
+        } else {
+            info.append(result('没有哦'));
         }
+    };
+}
 
-        info.append(template_begin + remains + '/' + total + template_end);
-    } else {
-        info.append(template_begin + '没有哦' + template_end);
-    }
-};
-
-var query = function() {
-    var url = 'http://222.200.98.171:81/searchresult.aspx?title_f=';
-    var books_name = str_encode($('title').text().slice(0, -5));
-
-    console.log(url + books_name);
+function query() {
+    var meta = book_meta();
+    var basic_url = 'http://222.200.98.171:81/searchresult.aspx?title_f=';
+    var url = basic_url + meta.name;
 
     GM_xmlhttpRequest({
         method: 'GET',
-        url: url + books_name,
-        onload: parse_query_results
+        url: url,
+        onload: parser_factory(meta, url)
     });
 };
 
