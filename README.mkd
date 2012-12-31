@@ -2,6 +2,20 @@
 
 豆瓣读书条目显示馆藏，全国第三漂亮的图书馆书还是挺多的哦！
 
+
+## Install
+
+### Chrome
+
+先安装 [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)，
+然后可以在 Options 里安装新脚本。
+
+
+### Firefox
+
+通过安装 Greasemonkey 来启用脚本。
+
+
 ## Author
 
 [@linkkingjay](https://github.com/linkkingjay)
