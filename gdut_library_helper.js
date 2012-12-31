@@ -17,16 +17,15 @@ function str_encode(str) {
     var c, ret = '';
     var special_str = '!\"#$%&\'()*+,/:;<=>?@[\]^`{|}~%';
     for (var i = 0;i < str.length;i++) {
-            switch(str.charAt(i))
-            {
-                case "，":ret += "%a3%ac";continue;
-                case "·" :ret += "%a1%a4";continue;
-                default:break;
-            }
-            if (str.charCodeAt(i) >= 0x4e00) {
-            c = charset[str.charCodeAt(i) - 0x4e00];
-            if(!c)break;
-            ret += '%' + c.slice(0, 2) + '%' + c.slice(-2);
+    	switch(str.charAt(i)){
+    		case "，":ret += "%a3%ac";continue;
+    		case "·" :ret += "%a1%a4";continue;
+    		default:break;
+    	}
+    	if (str.charCodeAt(i) >= 0x4e00) {
+    		c = charset[str.charCodeAt(i) - 0x4e00];
+    		if(!c)break;
+    		ret += '%' + c.slice(0, 2) + '%' + c.slice(-2);       
         } else {
             c = str.charAt(i);
             if (c == ' ')
