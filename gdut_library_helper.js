@@ -38,6 +38,9 @@ function str_encode(str) {
     return ret;
 }
 
+/* global */
+var basic_url = 'http://222.200.98.171:81/';
+
 /* templating */
 
 function result(buffer) {
@@ -51,6 +54,7 @@ function link(buffer_url, buffer_content) {
     return '&nbsp;<a target=_blank href=' + buffer_url + '>' + buffer_content + '</a>';
 }
 
+/* parser */
 
 function book_meta() {
     var publisher = /出版社: (.*)/.exec($('#info').text());
@@ -63,6 +67,21 @@ function book_meta() {
     };
 }
 
+function parse_result(buffer) {
+    var c = $(buffer).children();
+    if (c.length < 9)
+        return null;
+
+    return {
+        name: $(c[1]).text().trim(),
+        ctrlno: $('input', c[0]).attr('value').trim(),
+        author: $(c[2]).text().trim(),
+        publisher: $(c[3]).text().trim(),
+        total: parseInt($(c[6]).text().trim()),
+        remains: parseInt($(c[7]).text().trim())
+    };
+}
+
 function parser_factory(meta, query_url) {
     return function(resp) {
         var html = resp.responseText;
@@ -71,25 +90,35 @@ function parser_factory(meta, query_url) {
         var not_found = $('#searchnotfound', html);
         if (not_found.length === 0) {
             /* found the books */
-            var results = $('td.tbr', html);
             var total = 0;
             var remains = 0;
-            for (var i = 0;i < results.length;i += 3) {
-                total += parseInt($(results[i + 1]).text());
-                remains += parseInt($(results[i + 2]).text());
+            var results = $('tr', html);
+            var r;
+            var url;
+            for (var i = 0;i < results.length;i ++) {
+                r = parse_result(results[i]);
+                /* TODO improve matching accuracy */
+                if (r !== null && r.publisher === meta.publisher) {
+                    total += r.total;
+                    remains += r.remains;
+                    url = basic_url + 'bookinfo.aspx?ctrlno=' + r.ctrlno;
+                    break;
+                }
             }
 
-            info.append(result(link(query_url, remains + '/' + total)));
+            if (total == 0 && remains == 0)
+                info.append(result(link(query_url, '没有找到哦')));
+            else
+                info.append(result(link(url, remains + '/' + total)));
         } else {
-            info.append(result('没有哦'));
+            info.append(result(link(query_url, '没有这本书哦')));
         }
     };
 }
 
 function query() {
     var meta = book_meta();
-    var basic_url = 'http://222.200.98.171:81/searchresult.aspx?title_f=';
-    var url = basic_url + meta.name;
+    var url = basic_url + 'searchresult.aspx?dp=150&title_f=' + meta.name;
 
     GM_xmlhttpRequest({
         method: 'GET',
