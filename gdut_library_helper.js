@@ -5,7 +5,7 @@
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/subject/*
 // @copyright  2012-2013, Link, hbc
-// @require http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
+// @require http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js
 // ==/UserScript==
 // @grant GM_xmlhttpRequest
 
@@ -22,6 +22,7 @@ function str_encode(str) {
     		case "·" :ret += "%a1%a4";continue;
     		default:break;
     	}
+    	if(str.charAt(i) == "（") break;
         if (str.charCodeAt(i) >= 0x4e00) {
             c = charset[str.charCodeAt(i) - 0x4e00];
             ret += '%' + c.slice(0, 2) + '%' + c.slice(-2);
