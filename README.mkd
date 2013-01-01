@@ -5,7 +5,7 @@
 
 ## Install
 
-[userscripts 传送门](http://userscripts.org/scripts/review/155259)
+[脚本地址](http://userscripts.org/scripts/review/15525://raw.github.com/vtmer/gdut-library-helper/master/gdut_library_helper.js)
 
 ### Chrome
 
