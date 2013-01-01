@@ -5,7 +5,7 @@
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/subject/*
 // @copyright  2012-2013, Link, hbc
-// @require http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js
+// @require http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js
 // ==/UserScript==
 // @grant GM_xmlhttpRequest
 
@@ -22,6 +22,7 @@ function str_encode(str) {
     		case "·" :ret += "%a1%a4";continue;
     		default:break;
     	}
+    	if(str.charAt(i) == "（") break;
         if (str.charCodeAt(i) >= 0x4e00) {
             c = charset[str.charCodeAt(i) - 0x4e00];
             ret += '%' + c.slice(0, 2) + '%' + c.slice(-2);
@@ -67,7 +68,7 @@ function book_meta() {
     };
 }
 
-function parse_result(buffer) {
+function result_meta(buffer) {
     var c = $(buffer).children();
     if (c.length < 9)
         return null;
@@ -96,7 +97,7 @@ function parser_factory(meta, query_url) {
             var r;
             var url;
             for (var i = 0;i < results.length;i ++) {
-                r = parse_result(results[i]);
+                r = result_meta(results[i]);
                 /* TODO improve matching accuracy */
                 if (r !== null && r.publisher === meta.publisher) {
                     total += r.total;
@@ -107,7 +108,7 @@ function parser_factory(meta, query_url) {
             }
 
             if (total == 0 && remains == 0)
-                info.append(result(link(query_url, '没有找到哦')));
+                info.append(result(link(query_url, '没有找到一模一样的哦')));
             else
                 info.append(result(link(url, remains + '/' + total)));
         } else {

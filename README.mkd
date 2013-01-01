@@ -1,9 +1,11 @@
 # GDUT library helper
 
-豆瓣读书条目显示馆藏，全国第三漂亮的图书馆书还是挺多的哦！
+豆瓣读书条目显示馆藏，全国[第三漂亮](http://daxue.163.com/11/1115/16/7ITQV90H00913JC5_all.html)的图书馆书还是挺多的哦！
 
 
 ## Install
+
+[脚本地址](http://userscripts.org/scripts/review/15525://raw.github.com/vtmer/gdut-library-helper/master/gdut_library_helper.js)
 
 ### Chrome
 
