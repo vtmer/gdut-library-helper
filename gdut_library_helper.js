@@ -65,20 +65,20 @@ helper.utils.convertIsbn = function(isbn, length){
 helper.utils.tmpl = function(str, data) {
     var fn = new Function("obj",
         "var p=[],PRINT=function(){p.push.apply(p,arguments);};" +
-        
-        // Introduce the data as local variables using with(){}
-        "with(obj){p.push('" +
-        
-        // Convert the template into pure JavaScript
-        str
-          .replace(/[\r\t\n]/g, " ")
-          .split("<%").join("\t")
-          .replace(/((^|%>)[^\t]*)'/g, "$1\r")
-          .replace(/\t=(.*?)%>/g, "',$1,'")
-          .split("\t").join("');")
-          .split("%>").join("p.push('")
-          .split("\r").join("\\'")
-      + "');}return p.join('');");
+
+        // Introduce the data as local variables using with(){}
+        "with(obj){p.push('" +
+        
+        // Convert the template into pure JavaScript
+        str
+         .replace(/[\r\t\n]/g, " ")
+         .split("<%").join("\t")
+         .replace(/((^|%>)[^\t]*)'/g, "$1\r")
+         .replace(/\t=(.*?)%>/g, "',$1,'")
+         .split("\t").join("');")
+         .split("%>").join("p.push('")
+         .split("\r").join("\\'")
+    + "');}return p.join('');");
     return fn(data);
 };
 
@@ -86,15 +86,15 @@ helper.utils.tmpl = function(str, data) {
 
 helper.tmpl.result = function(buffer) {
     return helper.utils.tmpl(
-            '<span class="pl">GDUT:</span> <%=content%><br />',
-            {content: buffer}
+        '<span class="pl">GDUT:</span> <%=content%><br />',
+         {content: buffer}
     );
 };
 
 helper.tmpl.link = function(url, content) {
     return helper.utils.tmpl(
-            '&nbsp;<a target="_blank" href=<%=url%>><%=content%></a>',
-            {url: url, content: content}
+        '&nbsp;<a target="_blank" href=<%=url%>><%=content%></a>',
+        {url: url, content: content}
     );
 };
 
