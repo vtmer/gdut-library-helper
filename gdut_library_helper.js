@@ -87,6 +87,49 @@ helper.utils.tmpl = function(str, data) {
     return fn(data);
 };
 
+helper.utils.inject = function(resp) {
+    var html = resp.responseText;
+    var info = $('#info');
+    var tmpl;
+
+    var not_found = $('#searchnotfound', html);
+    if (not_found.length === 0) {
+        /* found the books */
+        var total = 0;
+        var remains = 0;
+        var results = $('tr', html);
+        var r;
+        var result_url;
+        var i;
+        for (i = 0;i < results.length;i ++) {
+            r = helper.parser.result(results[i]);
+            /* TODO improve matching accuracy */
+            if (r !== null && r.publisher === helper.book.publisher) {
+                total += r.total;
+                remains += r.remains;
+                result_url = helper.tmpl.book(r.ctrlno);
+                break;
+            }
+        }
+
+        if (total === 0 && remains === 0) {
+            tmpl = helper.tmpl.result(
+                    helper.tmpl.link(query_url, '没有找到一模一样的哦')
+                   );
+        } else {
+            tmpl = helper.tmpl.result(
+                    helper.tmpl.link(result_url, '还剩' + remains + '本')
+                   );
+        }
+    } else {
+        tmpl = helper.tmpl.result(
+                helper.tmpl.link(query_url, '没有找到哦')
+               );
+    }
+
+    info.append(tmpl);
+};
+
 /* templating */
 
 helper.tmpl.result = function(buffer) {
@@ -154,48 +197,7 @@ helper.query.name = function(name) {
     GM_xmlhttpRequest({
         method: 'GET',
         url: query_url,
-        onload: function(resp) {
-            var html = resp.responseText;
-            var info = $('#info');
-            var tmpl;
-
-            var not_found = $('#searchnotfound', html);
-            if (not_found.length === 0) {
-                /* found the books */
-                var total = 0;
-                var remains = 0;
-                var results = $('tr', html);
-                var r;
-                var result_url;
-                var i;
-                for (i = 0;i < results.length;i ++) {
-                    r = helper.parser.result(results[i]);
-                    /* TODO improve matching accuracy */
-                    if (r !== null && r.publisher === helper.book.publisher) {
-                        total += r.total;
-                        remains += r.remains;
-                        result_url = helper.tmpl.book(r.ctrlno);
-                        break;
-                    }
-                }
-
-                if (total === 0 && remains === 0) {
-                    tmpl = helper.tmpl.result(
-                            helper.tmpl.link(query_url, '没有找到一模一样的哦')
-                           );
-                } else {
-                    tmpl = helper.tmpl.result(
-                            helper.tmpl.link(result_url, '还剩' + remains + '本')
-                           );
-                }
-            } else {
-                tmpl = helper.tmpl.result(
-                        helper.tmpl.link(query_url, '没有找到哦')
-                       );
-            }
-
-            info.append(tmpl);
-        }
+        onload: helper.utils.inject
     });
 };
 
