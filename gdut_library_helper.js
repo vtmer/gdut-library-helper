@@ -25,6 +25,8 @@ var helper = {
 /* utils */
 // Origin code from Bean vine: userscripts.org/scripts/review/49911
 helper.utils.gb2312 = function(keyword) {
+    var dfd = $.Deferred();
+
     GM_xmlhttpRequest({
         method: 'GET',
         url: 'http://www.baidu.com/s?ie=utf-8&wd=' + encodeURIComponent(keyword),
@@ -34,14 +36,16 @@ helper.utils.gb2312 = function(keyword) {
                 return;
             }
             var keywordGB = String(resp.responseText.match(/word=[^'"&]+['"&]/i)).replace(/word=|['"&]/ig,'');
-            helper.query(keywordGB);
-            //helper.book.name = keywordGB;
-            //不知道为什么，我用上面那句的时候，执行query()时helper.book.name就变成undefined了。
+            /* in gb2312 now */
+            helper.book.name = keywordGB;
+            dfd.resolve(keywordGB);
         },
         onerror: function() {
             return;
         }
     });
+
+    return dfd.promise();
 };
 
 // Origin code from isbn.jpn.org
@@ -120,7 +124,8 @@ helper.parser.book = function() {
         isbn = isbn[1].trim();
     }
     
-    helper.utils.gb2312($('#wrapper h1 span').text());
+    /* still in utf-8 */
+    helper.book.name = $('#wrapper h1 span').text();
     helper.book.publisher = publisher;
     helper.book.isbn10 = helper.utils.convertISBN(isbn,10);
     helper.book.isbn13 = helper.utils.convertISBN(isbn,13);
@@ -142,9 +147,9 @@ helper.parser.result = function(buffer) {
     };
 };
 
-/* main */
+/* query */
 
-helper.query = function(name) {
+helper.query.name = function(name) {
     var query_url = helper.tmpl.query(name);
     GM_xmlhttpRequest({
         method: 'GET',
@@ -200,6 +205,7 @@ helper.init = function() {
 
 helper.kick = function() {
     helper.init();
+    helper.utils.gb2312(helper.book.name).then(helper.query.name);
 };
 
 /* kick off */
