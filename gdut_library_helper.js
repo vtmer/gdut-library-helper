@@ -87,46 +87,23 @@ helper.utils.tmpl = function(str, data) {
     return fn(data);
 };
 
-helper.utils.inject = function(resp) {
-    var html = resp.responseText;
+helper.utils.inject = function(result) {
     var info = $('#info');
     var tmpl;
 
-    var not_found = $('#searchnotfound', html);
-    if (not_found.length === 0) {
-        /* found the books */
-        var total = 0;
-        var remains = 0;
-        var results = $('tr', html);
-        var r;
-        var result_url;
-        var i;
-        for (i = 0;i < results.length;i ++) {
-            r = helper.parser.result(results[i]);
-            /* TODO improve matching accuracy */
-            if (r !== null && r.publisher === helper.book.publisher) {
-                total += r.total;
-                remains += r.remains;
-                result_url = helper.tmpl.book(r.ctrlno);
-                break;
-            }
-        }
-
-        if (total === 0 && remains === 0) {
+    if (!result.found) {
+        tmpl = helper.tmpl.result(helper.tmpl.link(result.url, '没有找到哦'));
+    } else {
+        if (result.total === 0 && result.remains === 0) {
             tmpl = helper.tmpl.result(
-                    helper.tmpl.link(query_url, '没有找到一模一样的哦')
+                    helper.tmpl.link(result.url, '没有找到一模一样的哦')
                    );
         } else {
             tmpl = helper.tmpl.result(
-                    helper.tmpl.link(result_url, '还剩' + remains + '本')
+                    helper.tmpl.link(result.url, '还剩' + result.remains + '本')
                    );
         }
-    } else {
-        tmpl = helper.tmpl.result(
-                helper.tmpl.link(query_url, '没有找到哦')
-               );
     }
-
     info.append(tmpl);
 };
 
@@ -146,8 +123,11 @@ helper.tmpl.link = function(url, content) {
     );
 };
 
-helper.tmpl.query = function(name) {
-    return helper.url + 'searchresult.aspx?dp=50&title_f=' + name;
+helper.tmpl.query = function(type, value) {
+    return helper.utils.tmpl(
+        helper.url + 'searchresult.aspx?dp=50&<%=type%>_f=<%=value%>',
+        {type: type, value: value}
+    );
 };
 
 helper.tmpl.book = function(ctrlno) {
@@ -190,15 +170,80 @@ helper.parser.result = function(buffer) {
     };
 };
 
+helper.parser.results = function(buffer, url) {
+    var ret = {
+        remains: 0,
+        total: 0,
+        found: false,
+        url: url
+    };
+
+    var not_found = $('#searchnotfound', buffer);
+    if (not_found.length === 0) {
+        /* found the books */
+        var results = $('tr', buffer);
+        var r;
+        var i;
+        ret.found = true;
+        for (i = 0;i < results.length;i ++) {
+            r = helper.parser.result(results[i]);
+            if (r !== null && r.publisher === helper.book.publisher) {
+                ret.url = helper.tmpl.book(r.ctrlno);
+                ret.remains += r.remains;
+                ret.total += r.total;
+                break;
+            }
+        }
+    }
+
+    return ret;
+};
+
 /* query */
 
-helper.query.name = function(name) {
-    var query_url = helper.tmpl.query(name);
-    GM_xmlhttpRequest({
-        method: 'GET',
-        url: query_url,
-        onload: helper.utils.inject
-    });
+helper.query.query_factory = function(type) {
+    return function(value) {
+        var dfd = new $.Deferred();
+        var query_url = helper.tmpl.query(type, value);
+
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: query_url,
+            onload: function(resp) {
+                result = helper.parser.results(resp.responseText, query_url);
+                if (result.found) {
+                    dfd.resolve(result);
+                } else {
+                    dfd.reject(result);
+                }
+            }
+        });
+
+        return dfd.promise();
+    };
+};
+
+helper.query.title = function() {
+    var dfd = new $.Deferred();
+
+    var fn = helper.query.query_factory('title');
+    /* FIXME */
+    helper.utils.gb2312(helper.book.name).then(fn).then(
+        helper.utils.inject
+    ).fail(dfd.reject);
+
+    return dfd.promise();
+};
+
+helper.query.isbn = function() {
+    var dfd = new $.Deferred();
+
+    var fn = helper.query.query_factory('isbn');
+    fn(helper.book.isbn13).fail(fn(helper.book.isbn10).done(
+        helper.utils.inject
+    ));
+
+    return dfd.promise();
 };
 
 helper.init = function() {
@@ -207,7 +252,7 @@ helper.init = function() {
 
 helper.kick = function() {
     helper.init();
-    helper.utils.gb2312(helper.book.name).then(helper.query.name);
+    helper.query.title().fail(helper.query.isbn);
 };
 
 /* kick off */
