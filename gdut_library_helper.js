@@ -107,6 +107,13 @@ helper.utils.inject = function(result) {
     info.append(tmpl);
 };
 
+helper.utils.publisher_cmp = function(a, b) {
+    if (a.publisher === b.publisher) {
+        return true;
+    }
+    return false;
+};
+
 /* templating */
 
 helper.tmpl.result = function(buffer) {
@@ -170,7 +177,7 @@ helper.parser.result = function(buffer) {
     };
 };
 
-helper.parser.results = function(buffer, url) {
+helper.parser.results = function(buffer, url, cmp) {
     var ret = {
         remains: 0,
         total: 0,
@@ -187,7 +194,7 @@ helper.parser.results = function(buffer, url) {
         ret.found = true;
         for (i = 0;i < results.length;i ++) {
             r = helper.parser.result(results[i]);
-            if (r !== null && r.publisher === helper.book.publisher) {
+            if (r !== null && cmp(r, helper.book)) {
                 ret.url = helper.tmpl.book(r.ctrlno);
                 ret.remains += r.remains;
                 ret.total += r.total;
@@ -201,7 +208,7 @@ helper.parser.results = function(buffer, url) {
 
 /* query */
 
-helper.query.query_factory = function(type) {
+helper.query.query_factory = function(type, cmp) {
     return function(value) {
         var dfd = new $.Deferred();
         var query_url = helper.tmpl.query(type, value);
@@ -210,7 +217,8 @@ helper.query.query_factory = function(type) {
             method: 'GET',
             url: query_url,
             onload: function(resp) {
-                result = helper.parser.results(resp.responseText, query_url);
+                result = helper.parser.results(resp.responseText, query_url,
+                                               cmp);
                 if (result.found) {
                     dfd.resolve(result);
                 } else {
@@ -226,7 +234,7 @@ helper.query.query_factory = function(type) {
 helper.query.title = function() {
     var dfd = new $.Deferred();
 
-    var fn = helper.query.query_factory('title');
+    var fn = helper.query.query_factory('title', helper.utils.publisher_cmp);
     helper.utils.gb2312(helper.book.name).then(function(name) {
         console.log(name);
         fn(name).then(helper.utils.inject).fail(dfd.reject);
@@ -238,7 +246,7 @@ helper.query.title = function() {
 helper.query.isbn = function() {
     var dfd = new $.Deferred();
 
-    var fn = helper.query.query_factory('isbn');
+    var fn = helper.query.query_factory('isbn', helper.utils.publisher_cmp);
     fn(helper.book.isbn13).fail(function() {
             fn(helper.book.isbn10).then(helper.utils.inject).fail(dfd.reject);
     }).then(helper.utils.inject);
