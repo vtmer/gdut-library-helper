@@ -227,10 +227,10 @@ helper.query.title = function() {
     var dfd = new $.Deferred();
 
     var fn = helper.query.query_factory('title');
-    /* FIXME */
-    helper.utils.gb2312(helper.book.name).then(fn).then(
-        helper.utils.inject
-    ).fail(dfd.reject);
+    helper.utils.gb2312(helper.book.name).then(function(name) {
+        console.log(name);
+        fn(name).then(helper.utils.inject).fail(dfd.reject);
+    }).fail(dfd.reject);
 
     return dfd.promise();
 };
@@ -239,9 +239,9 @@ helper.query.isbn = function() {
     var dfd = new $.Deferred();
 
     var fn = helper.query.query_factory('isbn');
-    fn(helper.book.isbn13).fail(fn(helper.book.isbn10).done(
-        helper.utils.inject
-    ));
+    fn(helper.book.isbn13).fail(function() {
+            fn(helper.book.isbn10).then(helper.utils.inject).fail(dfd.reject);
+    }).then(helper.utils.inject);
 
     return dfd.promise();
 };
@@ -252,7 +252,9 @@ helper.init = function() {
 
 helper.kick = function() {
     helper.init();
-    helper.query.title().fail(helper.query.isbn);
+    helper.query.isbn().fail(function() {
+        helper.query.title().fail(helper.utils.inject);
+    });
 };
 
 /* kick off */
