@@ -254,15 +254,27 @@ helper.query.isbn = function() {
     return dfd.promise();
 };
 
-helper.init = function() {
+helper.init.book = function() {
     helper.parser.book();
 };
 
 helper.kick = function() {
-    helper.init();
-    helper.query.isbn().fail(function() {
-        helper.query.title().fail(helper.utils.inject);
-    });
+    var type = /com\/([0-9a-z]+)\/*/.exec(document.URL);
+    if (type !== null) {
+        type = type[1].trim();
+    } else {
+        type = 'index';
+    }
+
+    /* dispatch the request */
+    if (type === 'subject') {
+        helper.init.book();
+        helper.query.isbn().fail(function() {
+            helper.query.title().fail(helper.utils.inject);
+        });
+    } else {
+        console.log(type);
+    }
 };
 
 /* kick off */
