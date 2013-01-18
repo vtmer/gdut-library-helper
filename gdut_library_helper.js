@@ -259,7 +259,7 @@ helper.init.book = function() {
 };
 
 helper.kick = function() {
-    var type = /com\/([0-9a-z]+)\/*/.exec(document.URL);
+    var type = /com\/([\w]+)\/*/.exec(document.URL);
     if (type !== null) {
         type = type[1].trim();
     } else {
