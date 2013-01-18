@@ -16,6 +16,7 @@ var helper = {
     book: {},
     parser: {},
     query: {},
+    inject: {},
     utils: {},
     tmpl: {},
     init: {},
@@ -87,31 +88,49 @@ helper.utils.tmpl = function(str, data) {
     return fn(data);
 };
 
-helper.utils.inject = function(result) {
+helper.utils.publisher_cmp = function(a, b) {
+    if (a.publisher === b.publisher) {
+        return true;
+    }
+    return false;
+};
+
+/* inject */
+
+helper.inject.book = function(result) {
     var info = $('#info');
     var tmpl;
 
-    if (!result.found) {
+    if (result.foundc <= 0) {
         tmpl = helper.tmpl.result(helper.tmpl.link(result.url, '没有找到哦'));
     } else {
         if (result.total === 0 && result.remains === 0) {
             tmpl = helper.tmpl.result(
-                    helper.tmpl.link(result.url, '没有找到一模一样的哦')
+                    helper.tmpl.link(result.url,
+                                     '找到 ' + result.foundc + ' 本类似的')
                    );
         } else {
             tmpl = helper.tmpl.result(
-                    helper.tmpl.link(result.url, '还剩' + result.remains + '本')
+                    helper.tmpl.link(result.url, '还剩 ' + result.remains + ' 本')
                    );
         }
     }
     info.append(tmpl);
 };
 
-helper.utils.publisher_cmp = function(a, b) {
-    if (a.publisher === b.publisher) {
-        return true;
+helper.inject.search = function(result) {
+    var r = $('#content .aside .mb20');
+    var tmpl;
+
+    if (result.foundc <= 0) {
+        tmpl = helper.tmpl.search('没有找到哦');
+    } else {
+        tmpl = helper.tmpl.search(
+                helper.tmpl.link(result.url,
+                                 '找到 ' + result.foundc + ' 本类似的')
+               );
     }
-    return false;
+    $(tmpl).insertBefore(r);
 };
 
 /* templating */
@@ -132,13 +151,20 @@ helper.tmpl.link = function(url, content) {
 
 helper.tmpl.query = function(type, value) {
     return helper.utils.tmpl(
-        helper.url + 'searchresult.aspx?dp=50&<%=type%>_f=<%=value%>',
+        helper.url + 'searchresult.aspx?dp=50&<%=type%>=<%=value%>',
         {type: type, value: value}
     );
 };
 
 helper.tmpl.book = function(ctrlno) {
     return helper.url + 'bookinfo.aspx?ctrlno=' + ctrlno;
+};
+
+helper.tmpl.search = function(desc) {
+    return helper.utils.tmpl(
+        '<div class="mb20"><div class="hd"><h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2></div><div class="bd"><p class="pl"><%=desc%></p></div>',
+        {desc: desc}
+    );
 };
 
 /* parser */
@@ -161,6 +187,10 @@ helper.parser.book = function() {
     helper.book.isbn13 = helper.utils.convertISBN(isbn,13);
 };
 
+helper.parser.search = function() {
+    helper.book.query_text = $('#inp-query').attr('value');
+};
+
 helper.parser.result = function(buffer) {
     var c = $(buffer).children();
     if (c.length < 9) {
@@ -181,17 +211,18 @@ helper.parser.results = function(buffer, url, cmp) {
     var ret = {
         remains: 0,
         total: 0,
-        found: false,
-        url: url
+        foundc: 0,
+        url: url,
     };
 
     var not_found = $('#searchnotfound', buffer);
     if (not_found.length === 0) {
         /* found the books */
-        var results = $('tr', buffer);
+        var results = $('tbody tr', buffer);
         var r;
         var i;
-        ret.found = true;
+        ret.foundc = $('#ctl00_ContentPlaceHolder1_countlbl', buffer).html();
+        ret.foundc = parseInt(ret.foundc, 10);
         for (i = 0;i < results.length;i ++) {
             r = helper.parser.result(results[i]);
             if (r !== null && cmp(r, helper.book)) {
@@ -234,10 +265,9 @@ helper.query.query_factory = function(type, cmp) {
 helper.query.title = function() {
     var dfd = new $.Deferred();
 
-    var fn = helper.query.query_factory('title', helper.utils.publisher_cmp);
+    var fn = helper.query.query_factory('title_f', helper.utils.publisher_cmp);
     helper.utils.gb2312(helper.book.name).then(function(name) {
-        console.log(name);
-        fn(name).then(helper.utils.inject).fail(dfd.reject);
+        fn(name).then(helper.inject.book).fail(dfd.reject);
     }).fail(dfd.reject);
 
     return dfd.promise();
@@ -246,16 +276,32 @@ helper.query.title = function() {
 helper.query.isbn = function() {
     var dfd = new $.Deferred();
 
-    var fn = helper.query.query_factory('isbn', helper.utils.publisher_cmp);
+    var fn = helper.query.query_factory('isbn_f', helper.utils.publisher_cmp);
     fn(helper.book.isbn13).fail(function() {
-            fn(helper.book.isbn10).then(helper.utils.inject).fail(dfd.reject);
-    }).then(helper.utils.inject);
+            fn(helper.book.isbn10).then(helper.inject.book).fail(dfd.reject);
+    }).then(helper.inject.book);
+
+    return dfd.promise();
+};
+
+helper.query.anywords = function() {
+    var dfd = new $.Deferred();
+
+    var cmp = function(a, b) {return false;};
+    var fn = helper.query.query_factory('anywords', cmp);
+    helper.utils.gb2312(helper.book.query_text).then(function(name) {
+        fn(name).then(helper.inject.search).fail(dfd.reject);
+    }).fail(dfd.reject);
 
     return dfd.promise();
 };
 
 helper.init.book = function() {
     helper.parser.book();
+};
+
+helper.init.search = function() {
+    helper.parser.search();
 };
 
 helper.kick = function() {
@@ -270,8 +316,11 @@ helper.kick = function() {
     if (type === 'subject') {
         helper.init.book();
         helper.query.isbn().fail(function() {
-            helper.query.title().fail(helper.utils.inject);
+            helper.query.title().fail(helper.inject.book);
         });
+    } else if (type === 'subject_search') {
+        helper.init.search();
+        helper.query.anywords().fail(helper.inject.search);
     } else {
         console.log(type);
     }
