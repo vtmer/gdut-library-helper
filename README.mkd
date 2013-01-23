@@ -1,13 +1,24 @@
 # GDUT library helper
 
-豆瓣读书条目显示馆藏，全国[第三漂亮](http://daxue.163.com/11/1115/16/7ITQV90H00913JC5_all.html)的图书馆书还是挺多的哦！
+广工图书馆豆瓣读书助手 (全国[第三漂亮](http://daxue.163.com/11/1115/16/7ITQV90H00913JC5_all.html)的图书馆书还是挺多的哦！)
 
 
-## Install
+## 功能
 
-[脚本地址](http://userscripts.org/scripts/review/15525://raw.github.com/vtmer/gdut-library-helper/master/gdut_library_helper.js)
+### 条目页面查询馆藏量
 
-### Chrome
+![条目页面显示](https://raw.github.com/vtmer/gdut-library-helper/develop/artworks/subject-query.png)
+
+### 搜索豆瓣读书的同时搜索广工图书馆
+
+![快捷搜索](https://raw.github.com/bcho/gdut-library-helper/develop/artworks/search.png)
+
+
+## 安裝
+
+[脚本地址](http://raw.github.com/vtmer/gdut-library-helper/master/gdut_library_helper.js)
+
+### Chrome / Chromium
 
 先安装 [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)，
 然后可以在 Options 里安装新脚本。
@@ -17,11 +28,18 @@
 
 通过安装 Greasemonkey 来启用脚本。
 
+(等各位 firefox 用户的测试)
 
-## Author
+
+## 新功能 / 大臭虫(Bug) / 吐槽 / 建议
+
+暂时先到 [issue](https://github.com/vtmer/gdut-library-helper/issues) 里面提吧！期待你的贡献与吐槽 =D
+
+
+## 开发者 
 
 [@linkkingjay](https://github.com/linkkingjay)
 
-[@hbc](https://github.com/bcho)
+[@hbc](http://www.douban.com/people/minihbc)
 
 维生数工作室
