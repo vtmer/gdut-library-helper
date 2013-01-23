@@ -7,11 +7,11 @@
 
 ### 条目页面查询馆藏量
 
-![条目页面显示](artworks/subject-query.png)
+![条目页面显示](https://raw.github.com/vtmer/gdut-library-helper/develop/artworks/subject-query.png)
 
 ### 搜索豆瓣读书的同时搜索广工图书馆
 
-![快捷搜索](artworks/search.png)
+![快捷搜索](https://raw.github.com/bcho/gdut-library-helper/develop/artworks/search.png)
 
 
 ## 安裝
