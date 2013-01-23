@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       GDUT library helper
 // @namespace  http://library.gdut.edu.cn
-// @version    0.1.0
+// @version    0.2.0
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
 // @copyright  2012-2013, Link, hbc
