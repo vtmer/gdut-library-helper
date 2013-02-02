@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name       GDUT library helper
 // @namespace  http://library.gdut.edu.cn
-// @version    0.2.0
+// @version    0.2.1
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
+// @match      http://222.200.98.171:81/readerrecommend.aspx*
 // @copyright  2012-2013, Link, hbc
 // @require http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js
 // @require http://isbn.jpn.org/js/isbn.js
@@ -138,7 +139,7 @@ helper.parser.results = function(buffer, url, meta, cmp) {
         remains: 0,
         total: 0,
         foundc: 0,
-        url: url,
+        url: url
     };
 
     var not_found = $('#searchnotfound', buffer);
@@ -162,29 +163,47 @@ helper.parser.results = function(buffer, url, meta, cmp) {
     return ret;
 };
 
+helper.parser.book_meta = function(raw) {
+    var publisher = /出版社: (.*)/.exec($('#info', raw).text());
+    if (publisher !== null) {
+        publisher = publisher[1].trim();
+    }
+    var isbn = /ISBN: (.*)/.exec($('#info', raw).text());
+    if (isbn !== null) {
+        isbn = isbn[1].trim();
+    }
+    var author = /作者: (.*)/.exec($('#info', raw).text());
+    if (author !== null) {
+        author = author[1].trim();
+    }
+    var publish_time = /出版年: (.*)/.exec($('#info', raw).text());
+    if (publish_time !== null) {
+        publish_time = publish_time[1].trim();
+    }
+
+    return {
+        title: $('h1 span', raw).text(),
+        author: author,
+        publisher: publisher,
+        publish_time: publish_time,
+        isbn: isbn,
+        isbn10: helper.utils.convertISBN(isbn, 10),
+        isbn13: helper.utils.convertISBN(isbn, 13)
+    };
+};
+
 /* pages */
 
 // /subject/xxx
 helper.pages.subject = function() {
-    var book_meta = function() {
-        var publisher = /出版社: (.*)/.exec($('#info').text());
-        if (publisher !== null) {
-            publisher = publisher[1].trim();
-        }
-        var isbn = /ISBN: (.*)/.exec($('#info').text());
-        if (isbn !== null) {
-            isbn = isbn[1].trim();
-        }
-
-        return {
-            title: $('#wrapper h1 span').text(),
-            publisher: publisher,
-            isbn10: helper.utils.convertISBN(isbn, 10),
-            isbn13: helper.utils.convertISBN(isbn, 13)
-        };
-    };
-
     var inject = function(result) {
+        var r = function(buffer) {
+            return helper.utils.tmpl(
+                ' | <a href="http://222.200.98.171:81/readerrecommend.aspx' +
+                '?douban_ref={{ href }}">去荐购</a>',
+                {href: buffer}
+            );
+        };
         var t = function(buffer) {
             return helper.utils.tmpl(
                 '<span class="pl">GDUT:</span> {{ content }}<br />',
@@ -203,7 +222,7 @@ helper.pages.subject = function() {
         var tmpl;
 
         if (result.foundc <= 0) {
-            tmpl = t(l(result.url, '没有找到哦'));
+            tmpl = t(l(result.url, '没有找到哦') + r(document.URL));
         } else {
             if (result.total === 0 && result.remains === 0) {
                 tmpl = t(l(result.url, '找到 ' + result.foundc + ' 本类似的'));
@@ -218,7 +237,7 @@ helper.pages.subject = function() {
         return (result.publisher === meta.publisher);
     };
 
-    var book = book_meta();
+    var book = helper.parser.book_meta($(document));
 
     var query_title = function() {
         var dfd = new $.Deferred();
@@ -298,11 +317,53 @@ helper.pages.subject_search = function() {
     query_anywords().fail(inject);
 };
 
+// library reader recommend
+helper.pages.readerrecommend = function() {
+    var book = /douban_ref=(.*)+/.exec(document.URL);
+
+    if (!book) {
+        return;
+    }
+
+    GM_xmlhttpRequest({
+        method: 'GET',
+        url: book[1],
+        onload: function(resp) {
+            var book_meta;
+
+            if (resp.status !== 200) {
+                return;
+            }
+    
+            /* FIXME I don't know why $('#wrapper', resp.responseText)
+             *       not work here
+             */
+            book_meta = helper.parser.book_meta(
+                $(resp.response).filter('div#wrapper')
+            );
+            console.log($(resp.response).filter('div#wrapper'));
+
+            $('#ctl00_ContentPlaceHolder1_titletb').val(
+                book_meta.title
+            );
+            $('#ctl00_ContentPlaceHolder1_isbntb').val(
+                book_meta.isbn
+            );
+            $('#ctl00_ContentPlaceHolder1_publishertb').val(
+                book_meta.publisher
+            );
+            $('#ctl00_ContentPlaceHolder1_publishdatetb').val(
+                book_meta.publish_time
+            );
+        }
+    });
+};
+
 
 /* main */
 
 helper.kick = function() {
-    var type = /com\/([\w]+)\/*/.exec(document.URL);
+    var type = /[com, 81]\/([\w]+)\/*/.exec(document.URL);
     type = (type !== null) ? (type[1].trim()) : ('index');
 
     /* dispatch */
@@ -310,6 +371,8 @@ helper.kick = function() {
         helper.pages.subject();
     } else if (type === 'subject_search') {
         helper.pages.subject_search();
+    } else if (type === 'readerrecommend') {
+        helper.pages.readerrecommend();
     } else {
         console.log(type);
     }
