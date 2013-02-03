@@ -199,9 +199,9 @@ helper.pages.subject = function() {
     var inject = function(result) {
         var r = function(buffer) {
             return helper.utils.tmpl(
-                ' | <a href="http://222.200.98.171:81/readerrecommend.aspx' +
+                ' | <a href="{{ url }}readerrecommend.aspx' +
                 '?douban_ref={{ href }}">去荐购</a>',
-                {href: buffer}
+                {href: buffer, url: helper.url}
             );
         };
         var t = function(buffer) {
