@@ -340,9 +340,8 @@ helper.pages.readerrecommend = function() {
              *       not work here
              */
             book_meta = helper.parser.book_meta(
-                $(resp.response).filter('div#wrapper')
+                $(resp.responseText).filter('div#wrapper')
             );
-            console.log($(resp.response).filter('div#wrapper'));
 
             $('#ctl00_ContentPlaceHolder1_titletb').val(
                 book_meta.title
