@@ -4,7 +4,8 @@
 // @version    0.2.1
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
-// @match      http://222.200.98.171:81/readerrecommend.aspx*
+// @match      http://222.200.98.171:81/*
+// @match      http://www.baidu.com/*
 // @copyright  2012-2013, Link, hbc
 // @require http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js
 // @require http://isbn.jpn.org/js/isbn.js
