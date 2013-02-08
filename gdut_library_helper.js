@@ -4,7 +4,8 @@
 // @version    0.2.1
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
-// @match      http://222.200.98.171:81/readerrecommend.aspx*
+// @match      http://222.200.98.171:81/*
+// @match      http://www.baidu.com/*
 // @copyright  2012-2013, Link, hbc
 // @require http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js
 // @require http://isbn.jpn.org/js/isbn.js
@@ -199,9 +200,9 @@ helper.pages.subject = function() {
     var inject = function(result) {
         var r = function(buffer) {
             return helper.utils.tmpl(
-                ' | <a href="http://222.200.98.171:81/readerrecommend.aspx' +
+                ' | <a href="{{ url }}readerrecommend.aspx' +
                 '?douban_ref={{ href }}">去荐购</a>',
-                {href: buffer}
+                {href: buffer, url: helper.url}
             );
         };
         var t = function(buffer) {
@@ -339,9 +340,8 @@ helper.pages.readerrecommend = function() {
              *       not work here
              */
             book_meta = helper.parser.book_meta(
-                $(resp.response).filter('div#wrapper')
+                $(resp.responseText).filter('div#wrapper')
             );
-            console.log($(resp.response).filter('div#wrapper'));
 
             $('#ctl00_ContentPlaceHolder1_titletb').val(
                 book_meta.title
