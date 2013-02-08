@@ -29,8 +29,16 @@ v0.2.1 加入
 
 ### Chrome / Chromium
 
+#### 方案一：
+
 先安装 [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)，
 然后可以在 Options 里安装新脚本。
+
+
+#### 方案二：
+
+安装 [Chrome 插件](gdut-library-helper.crx)，因为暂时还未在 Chrome Web Store 上
+架，所以先手拖到 chrome://extensions 安装吧 :)
 
 
 ### Firefox
