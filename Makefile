@@ -2,10 +2,11 @@
 
 name=gdut_library_helper
 extension_src_path=ext
+converter=gm2chrome/converter.py
 chrome=`which google-chrome`
 
 convert:
-	python converter.py ${name}.js
+	python ${converter} ${name}.js
 
 zipit:
 	zip ${name}.zip ${extension_src_path}/*
