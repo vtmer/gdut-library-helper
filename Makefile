@@ -2,10 +2,12 @@
 
 name=gdut_library_helper
 extension_src_path=ext
-chrome=`which google-chrome`
+converter=gm2chrome/converter.py
+# get the chrome in your machine
+chrome=`ls /usr/bin | grep 'chrom' | head -1`
 
 convert:
-	python converter.py ${name}.js
+	python ${converter} ${name}.js
 
 zipit:
 	zip ${name}.zip ${extension_src_path}/*
