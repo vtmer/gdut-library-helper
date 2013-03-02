@@ -48,7 +48,14 @@ helper.utils.convertISBN = function(isbn, length) {
     return result;
 };
 
-// Origin code from Bean vine: userscripts.org/scripts/review/49911
+/**
+ * gb2312 convert
+ *
+ * 因为图书馆那边的中文查询不支持 utf-8，
+ * 所以要先通过 baidu 将内容编码转换成 gb2312
+ *
+ * Origin code from Bean vine: userscripts.org/scripts/review/49911
+ */
 helper.utils.gb2312 = function(keyword) {
     var dfd = $.Deferred();
 
@@ -64,7 +71,7 @@ helper.utils.gb2312 = function(keyword) {
             var keywordGB = String(
                 resp.responseText.match(/word=[^'"&]+['"&]/i))
                                  .replace(/word=|['"&]/ig,'');
-            /* in gb2312 now */
+            /* it's gb2312 now */
             dfd.resolve(keywordGB);
         },
         onerror: function() {
@@ -75,7 +82,14 @@ helper.utils.gb2312 = function(keyword) {
     return dfd.promise();
 };
 
-// example: {{ name }}
+/**
+ * utils.tmpl
+ *
+ * 提供类似 mustache 的语法，只提供
+ * 变量代换
+ *
+ * example: {{ name }}
+ */
 helper.utils.tmpl = function(str, data) {
     var re = /\{\{([\w ]+)\}\}/, ret = str;
     var r;
@@ -87,6 +101,16 @@ helper.utils.tmpl = function(str, data) {
     return ret;
 };
 
+/**
+ * utils.query_factory
+ *
+ * 查询方法的工厂函数。
+ * 因为javascript 中 `xhr` 是异步操作，而一些逻辑是有先后顺序的，
+ * 所以用 jquery 里的 `deferred` 对象来实现顺序调用。
+ *
+ * @param meta  查询书籍的基本信息（书名、出版社、 isbn）
+ * @param cmp   用作比较当前书籍和图书馆查询结果
+ */
 helper.utils.query_factory = function(type, meta, cmp) {
     return function(value) {
         var dfd = new $.Deferred();
@@ -126,6 +150,11 @@ helper.tmpl.library_book_url= function(ctrlno) {
 
 /* parser */
 
+/**
+ * parser.result
+ *
+ * 解析查询结果 `table` 中的一个 `tr`
+ */
 helper.parser.result = function(buffer) {
     var c = $(buffer).children();
     if (c.length < 9) {
@@ -142,6 +171,18 @@ helper.parser.result = function(buffer) {
     };
 };
 
+/**
+ * parser.results
+ *
+ * 解析查询结果的 `table`
+ *
+ * @return object {
+ *      remains:    剩余总本数
+ *      total:      总本数
+ *      foundc:     是否有找到，非 0 表示找到类似条目的数目
+ *      url:        查询 url
+ * }
+ */
 helper.parser.results = function(buffer, url, meta, cmp) {
     var ret = {
         remains: 0,
