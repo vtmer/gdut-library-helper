@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       GDUT library helper
 // @namespace  http://library.gdut.edu.cn
-// @version    0.2.1
+// @version    0.2.2
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
 // @match      http://222.200.98.171:81/*
@@ -16,13 +16,20 @@
 var helper = {
     pages: {
         subject: {},
-        subject_search: {}
+        subject_search: {},
+        readerrecommend: {}
     },
     
     url: 'http://222.200.98.171:81/',
     utils: {},
     tmpl: {},
     parser: {},
+
+    /**
+     * kick
+     *
+     * 程序入口，根据当前 `url` 来分发操作。
+     */
     kick: {}
 };
 
