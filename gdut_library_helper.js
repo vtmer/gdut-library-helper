@@ -166,6 +166,7 @@ helper.parser.result = function(buffer) {
         ctrlno: $('input', c[0]).attr('value').trim(),
         author: $(c[2]).text().trim(),
         publisher: $(c[3]).text().trim(),
+        location: $(c[5]).text().trim(),
         total: parseInt($(c[6]).text().trim(), 10),
         remains: parseInt($(c[7]).text().trim(), 10)
     };
@@ -188,6 +189,7 @@ helper.parser.results = function(buffer, url, meta, cmp) {
         remains: 0,
         total: 0,
         foundc: 0,
+        location: '',
         url: url
     };
 
@@ -204,6 +206,7 @@ helper.parser.results = function(buffer, url, meta, cmp) {
                 ret.url = helper.tmpl.library_book_url(r.ctrlno);
                 ret.remains += r.remains;
                 ret.total += r.total;
+                ret.location = r.location;
                 break;
             }
         }
@@ -265,10 +268,15 @@ helper.pages.subject = function() {
                 {url: url, content: content}
             );
         };
-
+        var p = function(location) {
+            return helper.utils.tmpl(
+                ' 在 {{ location }}',
+                {location: location}
+            );
+        };
 
         var info = $('#info');
-        var tmpl;
+        var tmpl = '';
 
         if (result.foundc <= 0) {
             tmpl = t(l(result.url, '没有找到哦') + r(document.URL));
@@ -277,6 +285,9 @@ helper.pages.subject = function() {
                 tmpl = t(l(result.url, '找到 ' + result.foundc + ' 本类似的'));
             } else {
                 tmpl = t(l(result.url, '还剩 ' + result.remains + ' 本'));
+            }
+            if (result.location) {
+                tmpl += p(result.location);
             }
         }
         info.append(tmpl);
