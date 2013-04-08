@@ -13,6 +13,12 @@
 
 ![快捷搜索](artworks/search.png)
 
+### 显示书刊馆藏位置
+
+![馆藏位置](artworks/location.png)
+
+v0.2.2 加入
+
 
 ### 自动填写推荐购买表单
 
