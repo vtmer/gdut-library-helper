@@ -1,6 +1,11 @@
 *swp
 *~
+*pyc
 
 converter.py
 ext/
 *.pem
+
+venv/
+static/
+node_modules/
