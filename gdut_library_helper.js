@@ -196,11 +196,11 @@ helper.parser.results = function(buffer, url, meta, cmp) {
     var not_found = $('#searchnotfound', buffer);
     if (not_found.length === 0) {
         /* found the books */
-        var r, i;
+        var r, i , len;
         var results = $('tbody tr', buffer);
         ret.foundc = $('#ctl00_ContentPlaceHolder1_countlbl', buffer).html();
         ret.foundc = parseInt(ret.foundc, 10);
-        for (i = 0;i < results.length;i ++) {
+        for (i = 0 , len =  results.length; i < len;i ++) {
             r = helper.parser.result(results[i]);
             if (r !== null && cmp(r, meta)) {
                 ret.url = helper.tmpl.library_book_url(r.ctrlno);
