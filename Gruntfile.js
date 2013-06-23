@@ -1,0 +1,43 @@
+module.exports = function(grunt) {
+    grunt.initConfig({
+        pkg: grunt.file.readJSON('package.json'),
+
+        concat: {
+            options: {
+                process: function(src, filepath) {
+                    return '// Source: ' + filepath + '\n' +
+                        src.replace(/(^|\n)[ \t]*(var helper = helper \|\| \{\};)\s*/g, '');
+                }
+            },
+            helper: {
+                src: ['src/main.js', 'src/utils.js', 'src/tmpl.js', 
+                      'src/parser.js', 'src/pages.*.js', 'src/kick.js'],
+                dest: 'gdut_library_helper.js'
+            }
+        },
+
+        uglify: {
+            options: {
+                preserveComments: function(node, src) {
+                    return (/\@|\=/i).test(src.value);
+                }
+            },
+            helper: {
+                files: {
+                    'gdut_library_helper.min.js': 'gdut_library_helper.js'
+                }
+            }
+        },
+
+        watch: {
+            helper: {
+                files: ['src/**'],
+                tasks: ['concat:helper', 'uglify:helper']
+            }
+        }
+    });
+
+    grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-watch');
+};

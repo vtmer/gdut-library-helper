@@ -1,0 +1,34 @@
+{
+  "name": "gdut-library-helper",
+  "version": "0.2.2",
+  "description": "GDUT library helper",
+  "main": "gdut_library_helper.js",
+  "dependencies": {
+    "requirejs": "~2.1.5"
+  },
+  "devDependencies": {
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-watch": "~0.4.4",
+    "grunt-contrib-uglify": "~0.2.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bcho/gdut-library-helper.git"
+  },
+  "keywords": [
+    "grease monkey",
+    "chrome extension",
+    "GDUT",
+    "library",
+    "douban",
+    "book"
+  ],
+  "author": "Link, hbc",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/bcho/gdut-library-helper/issues"
+  }
+}

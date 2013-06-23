@@ -1,3 +1,4 @@
+// Source: src/main.js
 // ==UserScript==
 // @name       GDUT library helper
 // @namespace  http://library.gdut.edu.cn
@@ -33,7 +34,8 @@ var helper = {
     kick: {}
 };
 
-/* utils */
+// Source: src/utils.js
+helper.utils = {};
 
 // isbn converter
 helper.utils.convertISBN = function(isbn, length) {
@@ -135,6 +137,7 @@ helper.utils.query_factory = function(type, meta, cmp) {
     };
 };
 
+// Source: src/tmpl.js
 /* templating */
 
 helper.tmpl.query_url = function(type, value) {
@@ -148,6 +151,7 @@ helper.tmpl.library_book_url= function(ctrlno) {
     return helper.url + 'bookinfo.aspx?ctrlno=' + ctrlno;
 };
 
+// Source: src/parser.js
 /* parser */
 
 /**
@@ -244,8 +248,52 @@ helper.parser.book_meta = function(raw) {
     };
 };
 
-/* pages */
 
+// Source: src/pages.readerrecommend.js
+// library reader recommend
+helper.pages.readerrecommend = function() {
+    var book = /douban_ref=(.*)+/.exec(document.URL);
+
+    if (!book) {
+        return;
+    }
+
+    GM_xmlhttpRequest({
+        method: 'GET',
+        url: book[1],
+        onload: function(resp) {
+            var book_meta;
+
+            if (resp.status !== 200) {
+                return;
+            }
+    
+            /* FIXME I don't know why $('#wrapper', resp.responseText)
+             *       not work here
+             */
+            book_meta = helper.parser.book_meta(
+                $(resp.responseText).filter('div#wrapper')
+            );
+
+            $('#ctl00_ContentPlaceHolder1_titletb').val(
+                book_meta.title
+            );
+            $('#ctl00_ContentPlaceHolder1_isbntb').val(
+                book_meta.isbn
+            );
+            $('#ctl00_ContentPlaceHolder1_publishertb').val(
+                book_meta.publisher
+            );
+            $('#ctl00_ContentPlaceHolder1_publishdatetb').val(
+                book_meta.publish_time
+            );
+        }
+    });
+};
+
+
+
+// Source: src/pages.subject.js
 // /subject/xxx
 helper.pages.subject = function() {
     var inject = function(result) {
@@ -325,6 +373,7 @@ helper.pages.subject = function() {
     });
 };
 
+// Source: src/pages.subject_search.js
 // /subject_search
 helper.pages.subject_search = function() {
     var query_word = function() {
@@ -377,50 +426,8 @@ helper.pages.subject_search = function() {
     query_anywords().fail(inject);
 };
 
-// library reader recommend
-helper.pages.readerrecommend = function() {
-    var book = /douban_ref=(.*)+/.exec(document.URL);
 
-    if (!book) {
-        return;
-    }
-
-    GM_xmlhttpRequest({
-        method: 'GET',
-        url: book[1],
-        onload: function(resp) {
-            var book_meta;
-
-            if (resp.status !== 200) {
-                return;
-            }
-    
-            /* FIXME I don't know why $('#wrapper', resp.responseText)
-             *       not work here
-             */
-            book_meta = helper.parser.book_meta(
-                $(resp.responseText).filter('div#wrapper')
-            );
-
-            $('#ctl00_ContentPlaceHolder1_titletb').val(
-                book_meta.title
-            );
-            $('#ctl00_ContentPlaceHolder1_isbntb').val(
-                book_meta.isbn
-            );
-            $('#ctl00_ContentPlaceHolder1_publishertb').val(
-                book_meta.publisher
-            );
-            $('#ctl00_ContentPlaceHolder1_publishdatetb').val(
-                book_meta.publish_time
-            );
-        }
-    });
-};
-
-
-/* main */
-
+// Source: src/kick.js
 helper.kick = function() {
     var type = /[com, 81]\/([\w]+)\/*/.exec(document.URL);
     type = (type !== null) ? (type[1].trim()) : ('index');
