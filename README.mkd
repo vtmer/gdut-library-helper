@@ -54,9 +54,20 @@ v0.2.1 加入
 (等各位 firefox 用户的测试)
 
 
+## Hacking
+
+欢迎 hack 脚本君！
+
+脚本君暂时使用 [Grunt](http://gruntjs.com/) 和 Makefile 做开发管理。请在 clone
+之后务必执行 `git submodule init` 和 `npm install` 来安装开发依赖。
+
+Happy hacking. :)
+
+
 ## 新功能 / 大臭虫(Bug) / 吐槽 / 建议
 
-暂时先到 [issue](https://github.com/vtmer/gdut-library-helper/issues) 里面提吧！期待你的贡献与吐槽 =D
+暂时先到 [issue](https://github.com/vtmer/gdut-library-helper/issues) 里面提吧！
+期待你的贡献与吐槽 =D
 
 
 ## 开发者 
@@ -65,4 +76,4 @@ v0.2.1 加入
 
 [@hbc](http://www.douban.com/people/minihbc)
 
-维生数工作室
+[维生数工作室](http://vtmerhome.com/)
