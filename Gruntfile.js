@@ -13,6 +13,11 @@ module.exports = function(grunt) {
                 src: ['src/main.js', 'src/utils.js', 'src/tmpl.js', 
                       'src/parser.js', 'src/pages.*.js', 'src/kick.js'],
                 dest: '<%= pkg.name %>.js'
+            },
+            gm: {
+                src: ['src/main.js', 'src/utils.js', 'src/tmpl.js', 
+                      'src/parser.js', 'src/pages.*.js', 'src/kick.js'],
+                dest: '<%= pkg.name %>.gm.js'
             }
         },
 
@@ -43,5 +48,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
 
     grunt.registerTask('default', ['concat:helper', 'uglify:helper']);
+    grunt.registerTask('gm', ['concat:gm']);
     grunt.registerTask('dev', ['concat:helper', 'watch:helper']);
 };

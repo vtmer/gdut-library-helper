@@ -30,7 +30,6 @@ packit:
 	mv -f ${extension_src_path}.crx ${name}.crx
 
 clean:
-	rm -f *.crx
 	rm -f *.zip
-	rm -f ${name}.*.js
+	rm -f ${name}.js
 	rm -f *.map

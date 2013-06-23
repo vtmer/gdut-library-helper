@@ -6,6 +6,7 @@ converter.py
 ext/
 *.pem
 gdut-library-helper.*
+!*.gm.js
 !*.crx
 
 venv/
