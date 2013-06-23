@@ -1,10 +1,17 @@
 .PHONY: clean
 
-name=gdut_library_helper
+name=gdut-library-helper
 extension_src_path=ext
 converter=gm2chrome/converter.py
 # get the chrome in your machine
 chrome=`ls /usr/bin | grep 'chrom' | head -1`
+
+build: grunt convert packit
+
+dev: convert packit
+
+grunt:
+	grunt default
 
 convert:
 	python ${converter} ${name}.js
@@ -12,7 +19,7 @@ convert:
 zipit:
 	zip ${name}.zip ${extension_src_path}/*
 
-packit: convert
+packit:
 	if [ -a ${name}.pem ]; \
 	then \
 	    ${chrome} --pack-extension=${extension_src_path} --pack-extension-key=${name}.pem; \
@@ -25,3 +32,5 @@ packit: convert
 clean:
 	rm -f *.crx
 	rm -f *.zip
+	rm -f ${name}.*.js
+	rm -f *.map

@@ -12,19 +12,20 @@ module.exports = function(grunt) {
             helper: {
                 src: ['src/main.js', 'src/utils.js', 'src/tmpl.js', 
                       'src/parser.js', 'src/pages.*.js', 'src/kick.js'],
-                dest: 'gdut_library_helper.js'
+                dest: '<%= pkg.name %>.js'
             }
         },
 
         uglify: {
             options: {
+                // 保留 GM 脚本信息
                 preserveComments: function(node, src) {
                     return (/\@|\=/i).test(src.value);
                 }
             },
             helper: {
                 files: {
-                    'gdut_library_helper.min.js': 'gdut_library_helper.js'
+                    '<%= pkg.name %>.js': '<%= pkg.name %>.js'
                 }
             }
         },
@@ -32,7 +33,7 @@ module.exports = function(grunt) {
         watch: {
             helper: {
                 files: ['src/**'],
-                tasks: ['concat:helper', 'uglify:helper']
+                tasks: ['concat:helper']
             }
         }
     });
@@ -40,4 +41,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
+
+    grunt.registerTask('default', ['concat:helper', 'uglify:helper']);
+    grunt.registerTask('dev', ['concat:helper', 'watch:helper']);
 };

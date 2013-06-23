@@ -2,14 +2,15 @@
   "name": "gdut-library-helper",
   "version": "0.2.2",
   "description": "GDUT library helper",
-  "main": "gdut_library_helper.js",
+  "main": "gdut-library-helper.js",
   "dependencies": {
     "requirejs": "~2.1.5"
   },
   "devDependencies": {
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-watch": "~0.4.4",
-    "grunt-contrib-uglify": "~0.2.2"
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt": "~0.4.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -29,6 +30,6 @@
   "author": "Link, hbc",
   "license": "BSD",
   "bugs": {
-    "url": "https://github.com/bcho/gdut-library-helper/issues"
+    "url": "https://github.com/vtmer/gdut-library-helper/issues"
   }
 }

@@ -5,6 +5,8 @@
 converter.py
 ext/
 *.pem
+gdut-library-helper.*
+!*.crx
 
 venv/
 static/
