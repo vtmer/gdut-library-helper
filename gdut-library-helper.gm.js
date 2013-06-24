@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name       GDUT library helper
 // @namespace  http://library.gdut.edu.cn
-// @version    0.3.2
+// @version    0.3.3
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
 // @match      http://222.200.98.171:81/*
