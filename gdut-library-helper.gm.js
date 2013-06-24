@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name       GDUT library helper
 // @namespace  http://library.gdut.edu.cn
-// @version    0.3.3
+// @version    0.4.0
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
 // @match      http://222.200.98.171:81/*
@@ -236,8 +236,9 @@ helper.parser.result = function(buffer) {
  * }
  */
 helper.parser.results = function(buffer, url, meta, cmp) {
+    meta = meta || {};
     var ret = {
-        id: meta.id,
+        id: meta.id || null,
         remains: 0,
         total: 0,
         foundc: 0,
@@ -305,6 +306,125 @@ helper.parser.book_meta = function(raw) {
     };
 };
 
+helper.parser.doulist = function(raw) {
+    var books = [];
+
+    $('.doulist_item').each(function(i, e) {
+        var book = $('.pl2 a', e),
+            id, publisher, author;
+
+        id = /subject\/(\d+)/.exec($(book).attr('href'));
+        if (id.length > 1) {
+            id = id[1];
+        } else {
+            id = null;
+        }
+        publisher = /出版社: (.*)/.exec($('p.pl', e).text());
+        if (publisher !== null) {
+            publisher = publisher[1].trim();
+        }
+        author = /作者: (.*)/.exec($('p.pl', e).text());
+        if (author !== null) {
+            author = author[1].trim();
+        }
+
+        books.push({
+            id: id,
+            title: $(book).text().trim(),
+            author: author,
+            publisher: publisher,
+            _context: $(e)
+        });
+    });
+
+    return books;
+};
+
+// Source: src/pages.doulist.js
+// /doulist/xxx
+// `0.4.0` 加入
+helper.pages.doulist = function() {
+    var inject = function(book, result) {
+        var tmpl = '';
+
+        var t = function(buffer) {
+            return helper.utils.tmpl(
+                '还剩 {{ remains }} 本',
+                {remains: buffer}
+            );
+        };
+        var l = function(url, content) {
+            return helper.utils.tmpl(
+                'GDUT: <a target="_blank" href={{url}}>{{content}}</a><br />',
+                {url: url, content: content}
+            );
+        };
+        var p = function(buffer) {
+            return helper.utils.tmpl(
+                '地点: 在 {{ location }} <br />',
+                {location: buffer}
+            );
+        };
+
+        if (result.foundc > 0) {
+            if (result.total || result.remains) {
+                tmpl += l(result.url, t(result.remains));
+
+                if (result.location) {
+                    tmpl += p(result.location);
+                }
+
+                helper.utils.cache(book.id, result);
+            }
+        }
+
+        $('p.pl', book._context).append(tmpl);
+    };
+
+    var publisher_cmp = function(result, meta) {
+        return (result.publisher === meta.publisher);
+    };
+
+    var books = helper.parser.doulist($('html'));
+
+    var query_title = function(book) {
+        var dfd = new $.Deferred();
+
+        var dfd_reject = function(stuff) {
+            dfd.reject(book);
+        };
+
+        var fn = helper.utils.query_factory('title_f', book, publisher_cmp);
+        helper.utils.gb2312(book.title).then(function(gb2312_title) {
+            fn(gb2312_title)
+            .then(function(result) {
+                inject(book, result);
+            })
+            .fail(dfd_reject);
+        }).fail(dfd_reject);
+
+        return dfd.promise();
+    };
+
+    var query_cache = function(book) {
+        var dfd = new $.Deferred();
+
+        cache = helper.utils.cache(book.id);
+        if (!cache || cache.view > helper.refresh) {
+            dfd.reject(book);
+        } else {
+            inject(book, cache);
+            dfd.resolve(cache);
+        }
+
+        return dfd.promise();
+    };
+
+    for (var i = 0;i < books.length;i++) {
+        query_cache(books[i])
+            .fail(query_title);
+    }
+};
 
 // Source: src/pages.readerrecommend.js
 // library reader recommend
@@ -514,6 +634,8 @@ helper.kick = function() {
         helper.pages.subject_search();
     } else if (type === 'readerrecommend') {
         helper.pages.readerrecommend();
+    } else if (type === 'doulist') {
+        helper.pages.doulist();
     } else {
         console.log(type);
     }
