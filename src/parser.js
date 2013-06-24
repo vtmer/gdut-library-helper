@@ -47,6 +47,7 @@ helper.parser.results = function(buffer, url, meta, cmp) {
         view: 0
     };
 
+    buffer = helper.utils.clean(buffer);
     var not_found = $('#searchnotfound', buffer);
     if (not_found.length === 0) {
         /* found the books */
