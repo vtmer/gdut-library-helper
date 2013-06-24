@@ -101,3 +101,24 @@ helper.utils.query_factory = function(type, meta, cmp) {
         return dfd.promise();
     };
 };
+
+/**
+ * utils.cache
+ *
+ * 查询结果缓存函数，将查询结果缓存到 `localStorage` 中
+ * `0.3.2` 加入
+ *
+ * @param key   书籍的 id
+ * @param value 书籍信息
+ * @return      书籍信息 || null 
+ */
+helper.utils.cache = function(key, value) {
+    key = 'helper.library' + key;
+
+    if (typeof value !== 'undefined') {
+        localStorage.setItem(key, JSON.stringify(value));
+    } else {
+        value = JSON.parse(localStorage.getItem(key));
+    }
+    return value;
+};

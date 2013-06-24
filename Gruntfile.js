@@ -49,5 +49,5 @@ module.exports = function(grunt) {
 
     grunt.registerTask('default', ['concat:helper', 'uglify:helper']);
     grunt.registerTask('gm', ['concat:gm']);
-    grunt.registerTask('dev', ['concat:helper', 'watch:helper']);
+    grunt.registerTask('dev', ['concat:helper', 'watch:helper', 'concat:gm']);
 };
