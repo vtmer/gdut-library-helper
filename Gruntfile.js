@@ -47,7 +47,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
 
-    grunt.registerTask('default', ['concat:helper', 'uglify:helper']);
+    grunt.registerTask('default', ['concat:helper', 'uglify:helper', 'concat:gm']);
     grunt.registerTask('gm', ['concat:gm']);
     grunt.registerTask('dev', ['concat:helper', 'watch:helper', 'concat:gm']);
 };

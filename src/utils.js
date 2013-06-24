@@ -108,9 +108,9 @@ helper.utils.query_factory = function(type, meta, cmp) {
  * 查询结果缓存函数，将查询结果缓存到 `localStorage` 中
  * `0.3.2` 加入
  *
- * @param key   书籍的 id
- * @param value 书籍信息
- * @return      书籍信息 || null 
+ * @param key       书籍的 id
+ * @param value     书籍信息
+ * @return string   书籍信息 || null 
  */
 helper.utils.cache = function(key, value) {
     key = 'helper.library' + key;
@@ -121,4 +121,29 @@ helper.utils.cache = function(key, value) {
         value = JSON.parse(localStorage.getItem(key));
     }
     return value;
+};
+
+/**
+ * utils.clean
+ *
+ * 将 ajax 请求回来的 html 中包含的 img/script/link/style 标签去掉
+ * 减少无谓的请求
+ * `0.3.3` 加入
+ *
+ * @param content   原始 html
+ * @return string   清理后的 html
+ */
+helper.utils.clean = function(content) {
+    var tags = [
+       /<img.*>/gi,
+       /<script.*>.*<\/script>/gi,
+       /<link.*>.*<\/link>/gi,
+       /<style.*>.*<\/style>/gi
+    ];
+
+    for (var i = 0;i < tags.length;i++) {
+        content = content.replace(tags[i], '');
+    }
+
+    return content;
 };

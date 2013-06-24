@@ -72,6 +72,8 @@ Happy hacking. :)
 
 ## Changelog
 
+v0.3.3 减少不必要的静态文件请求
+
 v0.3.2 添加缓存功能
 
 v0.3.2 添加 Changelog
