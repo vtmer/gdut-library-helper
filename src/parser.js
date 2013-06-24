@@ -38,11 +38,13 @@ helper.parser.result = function(buffer) {
  */
 helper.parser.results = function(buffer, url, meta, cmp) {
     var ret = {
+        id: meta.id,
         remains: 0,
         total: 0,
         foundc: 0,
         location: '',
-        url: url
+        url: url,
+        view: 0
     };
 
     var not_found = $('#searchnotfound', buffer);
@@ -84,8 +86,15 @@ helper.parser.book_meta = function(raw) {
     if (publish_time !== null) {
         publish_time = publish_time[1].trim();
     }
+    var id = /subject\/(\d+)/.exec(location.href);
+    if (id.length > 1) {
+        id = id[1];
+    } else {
+        id = null;
+    }
 
     return {
+        id: id,
         title: $('h1 span', raw).text(),
         author: author,
         publisher: publisher,

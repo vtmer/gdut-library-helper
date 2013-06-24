@@ -43,6 +43,9 @@ helper.pages.subject = function() {
             if (result.location) {
                 tmpl += p(result.location);
             }
+
+            result.view += 1;
+            helper.utils.cache(result.id, result);
         }
         info.append(tmpl);
     };
@@ -73,8 +76,23 @@ helper.pages.subject = function() {
 
         return dfd.promise();
     };
+    var query_cache = function() {
+        var dfd = new $.Deferred();
 
-    query_isbn().fail(function() {
-        query_title().fail(inject);
+        cache = helper.utils.cache(book.id);
+        if (!cache || cache.view > helper.refresh) {
+            dfd.reject(cache);
+        } else {
+            inject(cache);
+            dfd.resolve(cache);
+        }
+
+        return dfd.promise();
+    };
+
+    query_cache().fail(function() {
+        query_isbn().fail(function() {
+            query_title().fail(inject);
+        });
     });
 };

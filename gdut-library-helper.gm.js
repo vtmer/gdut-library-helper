@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name       GDUT library helper
 // @namespace  http://library.gdut.edu.cn
-// @version    0.2.2
+// @version    0.3.2
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
 // @match      http://222.200.98.171:81/*
@@ -22,6 +22,7 @@ var helper = {
     },
     
     url: 'http://222.200.98.171:81/',
+    refresh: 5,
     utils: {},
     tmpl: {},
     parser: {},
@@ -137,6 +138,27 @@ helper.utils.query_factory = function(type, meta, cmp) {
     };
 };
 
+/**
+ * utils.cache
+ *
+ * 查询结果缓存函数，将查询结果缓存到 `localStorage` 中
+ * `0.3.2` 加入
+ *
+ * @param key   书籍的 id
+ * @param value 书籍信息
+ * @return      书籍信息 || null 
+ */
+helper.utils.cache = function(key, value) {
+    key = 'helper.library' + key;
+
+    if (typeof value !== 'undefined') {
+        localStorage.setItem(key, JSON.stringify(value));
+    } else {
+        value = JSON.parse(localStorage.getItem(key));
+    }
+    return value;
+};
+
 // Source: src/tmpl.js
 /* templating */
 
@@ -190,11 +212,13 @@ helper.parser.result = function(buffer) {
  */
 helper.parser.results = function(buffer, url, meta, cmp) {
     var ret = {
+        id: meta.id,
         remains: 0,
         total: 0,
         foundc: 0,
         location: '',
-        url: url
+        url: url,
+        view: 0
     };
 
     var not_found = $('#searchnotfound', buffer);
@@ -236,8 +260,15 @@ helper.parser.book_meta = function(raw) {
     if (publish_time !== null) {
         publish_time = publish_time[1].trim();
     }
+    var id = /subject\/(\d+)/.exec(location.href);
+    if (id.length > 1) {
+        id = id[1];
+    } else {
+        id = null;
+    }
 
     return {
+        id: id,
         title: $('h1 span', raw).text(),
         author: author,
         publisher: publisher,
@@ -337,6 +368,9 @@ helper.pages.subject = function() {
             if (result.location) {
                 tmpl += p(result.location);
             }
+
+            result.view += 1;
+            helper.utils.cache(result.id, result);
         }
         info.append(tmpl);
     };
@@ -367,9 +401,24 @@ helper.pages.subject = function() {
 
         return dfd.promise();
     };
+    var query_cache = function() {
+        var dfd = new $.Deferred();
 
-    query_isbn().fail(function() {
-        query_title().fail(inject);
+        cache = helper.utils.cache(book.id);
+        if (!cache || cache.view > helper.refresh) {
+            dfd.reject(cache);
+        } else {
+            inject(cache);
+            dfd.resolve(cache);
+        }
+
+        return dfd.promise();
+    };
+
+    query_cache().fail(function() {
+        query_isbn().fail(function() {
+            query_title().fail(inject);
+        });
     });
 };
 
