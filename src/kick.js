@@ -11,6 +11,8 @@ helper.kick = function() {
         helper.pages.subject_search();
     } else if (type === 'readerrecommend') {
         helper.pages.readerrecommend();
+    } else if (type === 'doulist') {
+        helper.pages.doulist();
     } else {
         console.log(type);
     }

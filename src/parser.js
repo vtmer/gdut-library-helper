@@ -107,3 +107,36 @@ helper.parser.book_meta = function(raw) {
     };
 };
 
+helper.parser.doulist = function(raw) {
+    var books = [];
+
+    $('.doulist_item').each(function(i, e) {
+        var book = $('.pl2 a', e),
+            id, publisher, author;
+
+        id = /subject\/(\d+)/.exec($(book).attr('href'));
+        if (id.length > 1) {
+            id = id[1];
+        } else {
+            id = null;
+        }
+        publisher = /出版社: (.*)/.exec($('p.pl', e).text());
+        if (publisher !== null) {
+            publisher = publisher[1].trim();
+        }
+        author = /作者: (.*)/.exec($('p.pl', e).text());
+        if (author !== null) {
+            author = author[1].trim();
+        }
+
+        books.push({
+            id: id,
+            title: $(book).text().trim(),
+            author: author,
+            publisher: publisher,
+            _context: $(e)
+        });
+    });
+
+    return books;
+};

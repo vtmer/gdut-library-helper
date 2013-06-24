@@ -20,6 +20,11 @@
 v0.2.2 加入
 
 
+### 豆列显示馆藏信息
+
+![豆列](artworks/doulist.png)
+
+
 ### 自动填写推荐购买表单
 
 ![广工大图书馆居然没有？！](artworks/not_found.png)
@@ -71,6 +76,8 @@ Happy hacking. :)
 
 
 ## Changelog
+
+v0.4.0 添加豆列查询馆藏位置功能
 
 v0.3.3 减少不必要的静态文件请求
 
