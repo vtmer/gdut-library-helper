@@ -37,8 +37,9 @@ helper.parser.result = function(buffer) {
  * }
  */
 helper.parser.results = function(buffer, url, meta, cmp) {
+    meta = meta || {};
     var ret = {
-        id: meta.id,
+        id: meta.id || null,
         remains: 0,
         total: 0,
         foundc: 0,
