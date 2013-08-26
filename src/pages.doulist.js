@@ -4,7 +4,7 @@ var helper = helper || {};
 // `0.4.0` 加入
 helper.pages.doulist = function() {
     var inject = function(book, result) {
-        var tmpl = '';
+        var tmpl = '<br />';
 
         var t = function(buffer) {
             return helper.utils.tmpl(
