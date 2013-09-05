@@ -95,3 +95,7 @@ v0.3.2 添加 Changelog
 [维生数工作室](http://vtmerhome.com/)
 
 [关注我们的微博](http://weibo.com/vtmer)
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/vtmer/gdut-library-helper/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
