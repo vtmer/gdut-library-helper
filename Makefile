@@ -1,35 +1,45 @@
-.PHONY: clean
+.PHONY: clean main combile_js build_js convert_crx build_crx
 
-name=gdut-library-helper
-extension_src_path=ext
-converter=gm2chrome/converter.py
-# get the chrome in your machine
-chrome=`ls /usr/bin | grep 'chrom' | head -1`
+SCRIPT_NAME=gdut-library-helper
+JS_NAME=$(SCRIPT_NAME).js
+GM_SCRIPT_NAME=$(SCRIPT_NAME).gm.js
+CRX_NAME=$(SCRIPT_NAME).crx
+CRX_PEM=$(SCRIPT_NAME).pem
 
-build: grunt convert packit
+BUILD_DIR=`pwd`/dist
+JS_BUILD_SCRIPT=`pwd`/dist/$(JS_NAME)
+CRX_BUILD_DIR=$(BUILD_DIR)/crx
 
-dev: convert packit
+GM_CONVERTER=python3 `pwd`/gm2chrome/converter.py
+CHROME=/usr/bin/chromium
+GRUNT=grunt
 
-grunt:
-	grunt default
 
-convert:
-	python ${converter} ${name}.js
+main: build_crx build_js
 
-zipit:
-	zip ${name}.zip ${extension_src_path}/*
 
-packit:
-	if [ -a ${name}.pem ]; \
+# 打包脚本成 crx 格式
+build_crx: $(CRX_NAME) convert_crx
+	if [ -a $(CRX_PEM) ]; \
 	then \
-	    ${chrome} --pack-extension=${extension_src_path} --pack-extension-key=${name}.pem; \
+		$(CHROME) --pack-extension=$(CRX_BUILD_DIR) --pack-extension-key=$(CRX_PEM); \
 	else \
-	    ${chrome} --pack-extension=${extension_src_path}; \
-	    mv -f ${extension_src_path}.pem ${name}.pem; \
+		$(CHROME) --pack-extension=$(CRX_BUILD_DIR); \
+		mv -f ${CRX_BUILD_DIR}.pem $(CRX_PEM); \
 	fi;
-	mv -f ${extension_src_path}.crx ${name}.crx
+	mv -f ${CRX_BUILD_DIR}.crx $(CRX_NAME)
 
-clean:
-	rm -f *.zip
-	rm -f ${name}.js
-	rm -f *.map
+
+# 调用 ``gm2chrome`` 脚本将油猴脚本转换成标准的 chrome 插件脚本
+convert_crx: compile_js
+	$(GM_CONVERTER) $(JS_BUILD_SCRIPT) $(CRX_BUILD_DIR)
+
+
+# 打包脚本为油猴脚本
+build_js: compile_js
+	cp $(JS_BUILD_SCRIPT) $(GM_SCRIPT_NAME)
+
+
+# 使用 ``browserify`` 编译脚本
+compile_js: $(BUILD_JS)
+	$(GRUNT)
