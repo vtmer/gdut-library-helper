@@ -1,644 +1,724 @@
-// Source: src/main.js
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = {
+  libraryBaseUrl: 'http://222.200.98.171:81',
+  localCacheLife: 5,
+  localCacheKeyPrefix: 'gdut_library_helper_'
+};
+
+},{}],2:[function(require,module,exports){
+var helper, pages, utils;
+
+utils = require('./utils');
+
+pages = require('./pages');
+
+module.exports = helper = {
+  options: {
+    libraryUrl: 'http://222.200.98.171:81',
+    localCacheLife: 5
+  },
+  dispatch: function() {
+    var matched, pageName;
+    matched = /[com, 81]\/([\w]+)\/*/.exec(document.URL);
+    pageName = matched === null ? 'index' : matched[1].trim();
+    utils.log("Processing " + pageName + ".");
+    switch (pageName) {
+      case 'subject':
+        return this.page.doubanBookItem();
+      case 'subject_search':
+        return this.page.doubanBooksSearch();
+      case 'doulist':
+        return this.page.doubanBooksList();
+      case 'readerrecommend':
+        return this.page.libraryReaderRecommend();
+      default:
+        return utils.errLog("Unable to find page handler for " + pageName + ".");
+    }
+  },
+  page: {
+    doubanBookItem: function() {
+      return pages.douban.item.handle();
+    },
+    doubanBooksSearch: function() {
+      return pages.douban.search.handle();
+    },
+    doubanBooksList: function() {
+      return pages.douban.list.handle();
+    },
+    libraryReaderRecommend: function() {
+      return pages.library.recommend.handle();
+    }
+  }
+};
+
+},{"./pages":6,"./utils":18}],3:[function(require,module,exports){
+
 // ==UserScript==
 // @name       GDUT library helper
 // @namespace  http://library.gdut.edu.cn
-// @version    0.4.0
+// @version    0.5.0
 // @description  Show the available books amount in GDUT library.
 // @match      http://book.douban.com/*
 // @match      http://222.200.98.171:81/*
 // @match      http://www.baidu.com/*
-// @copyright  2012-2013, Link, hbc
-// @require http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.3.min.js
+// @copyright  2012, Link, hbc
+// @require http://cdn.staticfile.org/jquery/2.1.1-rc2/jquery.min.js
 // @require http://isbn.jpn.org/js/isbn.js
 // @require http://isbn.jpn.org/js/isbn-groups.js
-// ==/UserScript==
 // @grant GM_xmlhttpRequest
+// ==/UserScript==
+;
+(require('./helper')).dispatch();
 
-var helper = {
-    pages: {
-        subject: {},
-        subject_search: {},
-        readerrecommend: {}
-    },
-    
-    url: 'http://222.200.98.171:81/',
-    refresh: 5,
-    utils: {},
-    tmpl: {},
-    parser: {},
+},{"./helper":2}],4:[function(require,module,exports){
+var BasePageHandler;
 
-    /**
-     * kick
-     *
-     * 程序入口，根据当前 `url` 来分发操作。
-     */
-    kick: {}
+BasePageHandler = (function() {
+  function BasePageHandler() {}
+
+  BasePageHandler.prototype.handle = function() {};
+
+  BasePageHandler.prototype.inject = function() {};
+
+  return BasePageHandler;
+
+})();
+
+module.exports = BasePageHandler;
+
+},{}],5:[function(require,module,exports){
+var BasePageHandler, BookItemHandler, DouListHandler, DoubanPageHandler, SearchHandler, parser, query, templates, utils,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+utils = require('../utils');
+
+query = require('../query');
+
+parser = (require('../parser')).douban;
+
+templates = (require('../templates')).douban;
+
+BasePageHandler = require('./_base');
+
+DoubanPageHandler = (function(_super) {
+  __extends(DoubanPageHandler, _super);
+
+  function DoubanPageHandler() {
+    return DoubanPageHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  DoubanPageHandler.prototype.itemKey = function(bookMeta) {
+    return "douban_" + bookMeta.id;
+  };
+
+  return DoubanPageHandler;
+
+})(BasePageHandler);
+
+BookItemHandler = (function(_super) {
+  __extends(BookItemHandler, _super);
+
+  function BookItemHandler() {
+    return BookItemHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  BookItemHandler.prototype.inject = function(bookInfos, bookMeta) {
+    ($('#info')).append(templates.subject.bookInfos(bookInfos));
+    return utils.cache.writeBookInfos(this.itemKey(bookMeta), bookInfos);
+  };
+
+  BookItemHandler.prototype.injectFail = function(bookInfos, bookMeta) {
+    var $info;
+    $info = $('#info');
+    if (bookInfos) {
+      return $info.append(templates.subject.foundMultiple(bookInfos));
+    } else {
+      return $info.append(templates.subject.notFound(bookMeta));
+    }
+  };
+
+  BookItemHandler.prototype.handle = function() {
+    var bookMeta;
+    bookMeta = parser.parseBookItemPage($('body'));
+    return query.local.bookId(this.itemKey(bookMeta)).then(function() {
+      return query.library.isbn(bookMeta);
+    }).then(function() {
+      return query.library.title(bookMeta);
+    }).then((function(_this) {
+      return function(bookInfos) {
+        return _this.injectFail(bookInfos, bookMeta);
+      };
+    })(this)).fail((function(_this) {
+      return function(bookInfos) {
+        return _this.inject(bookInfos, bookMeta);
+      };
+    })(this));
+  };
+
+  return BookItemHandler;
+
+})(DoubanPageHandler);
+
+SearchHandler = (function(_super) {
+  __extends(SearchHandler, _super);
+
+  function SearchHandler() {
+    return SearchHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  SearchHandler.prototype.inject = function(infos) {
+    var tmpl;
+    if (infos) {
+      tmpl = templates.subjectSearch.result(infos);
+    } else {
+      tmpl = templates.subjectSearch.notFound();
+    }
+    return $(tmpl).insertBefore($('#content .aside .mb20'));
+  };
+
+  SearchHandler.prototype.handle = function() {
+    var keyword;
+    keyword = parser.parseSearchPage($('body'));
+    return query.library.keyword(keyword).always(this.inject);
+  };
+
+  return SearchHandler;
+
+})(DoubanPageHandler);
+
+DouListHandler = (function(_super) {
+  __extends(DouListHandler, _super);
+
+  function DouListHandler() {
+    return DouListHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  DouListHandler.prototype.inject = function(bookInfos, bookMeta) {
+    if (!bookMeta.$item) {
+      return;
+    }
+    ($('p.pl', bookMeta.$item)).append(templates.douList.bookInfos(bookInfos));
+    return utils.cache.writeBookInfos(this.itemKey(bookMeta), bookInfos);
+  };
+
+  DouListHandler.prototype.handleBook = function(bookMeta) {
+    return query.local.bookId(this.itemKey(bookMeta)).then(function() {
+      return query.library.title(bookMeta);
+    }).fail((function(_this) {
+      return function(bookInfos) {
+        return _this.inject(bookInfos, bookMeta);
+      };
+    })(this));
+  };
+
+  DouListHandler.prototype.handle = function() {
+    var book, _i, _len, _ref, _results;
+    _ref = parser.parseListPage($('body'));
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      book = _ref[_i];
+      _results.push(this.handleBook(book));
+    }
+    return _results;
+  };
+
+  return DouListHandler;
+
+})(DoubanPageHandler);
+
+module.exports = {
+  item: new BookItemHandler,
+  search: new SearchHandler,
+  list: new DouListHandler
 };
 
-// Source: src/utils.js
-helper.utils = {};
-
-// isbn converter
-helper.utils.convertISBN = function(isbn, length) {
-    var result = [ ];
-    isbn = ISBN.parse(isbn);
-    if(length === 10) {
-        result.push(isbn.asIsbn10(true));
-    }
-    else if(length === 13) {
-        result.push(isbn.asIsbn13(true));
-    }
-    return result;
+},{"../parser":9,"../query":12,"../templates":16,"../utils":18,"./_base":4}],6:[function(require,module,exports){
+module.exports = {
+  douban: require('./douban'),
+  library: require('./library')
 };
 
-/**
- * gb2312 convert
- *
- * 因为图书馆那边的中文查询不支持 utf-8，
- * 所以要先通过 baidu 将内容编码转换成 gb2312
- *
- * Origin code from Bean vine: userscripts.org/scripts/review/49911
- */
-helper.utils.gb2312 = function(keyword) {
-    var dfd = $.Deferred();
+},{"./douban":5,"./library":7}],7:[function(require,module,exports){
+var BasePageHandler, RecommendHandler, doubanQuery, parser,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
+parser = (require('../parser')).library;
+
+doubanQuery = (require('../query')).douban;
+
+BasePageHandler = require('./_base');
+
+RecommendHandler = (function(_super) {
+  __extends(RecommendHandler, _super);
+
+  function RecommendHandler() {
+    return RecommendHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  RecommendHandler.prototype.inject = function(bookMeta) {
+    ($('#ctl00_ContentPlaceHolder1_titletb')).val(bookMeta.title);
+    ($('#ctl00_ContentPlaceHolder1_authortb')).val(bookMeta.author);
+    ($('#ctl00_ContentPlaceHolder1_isbntb')).val(bookMeta.isbn);
+    ($('#ctl00_ContentPlaceHolder1_publisherb')).val(bookMeta.publisher);
+    return ($('#ctl00_ContentPlaceHolder1_publishdatetb')).val(bookMeta.publishYear);
+  };
+
+  RecommendHandler.prototype.handle = function() {
+    var doubanBookId;
+    doubanBookId = parser.parseDoubanReference();
+    if (!doubanBookId) {
+      return;
+    }
+    return doubanQuery.queryItem(doubanBookId).fail(this.inject);
+  };
+
+  return RecommendHandler;
+
+})(BasePageHandler);
+
+module.exports = {
+  recommend: new RecommendHandler
+};
+
+},{"../parser":9,"../query":12,"./_base":4}],8:[function(require,module,exports){
+var R_AUTHOR, R_BOOK_ID, R_ISBN, R_PUBLISHER, R_PUBLISH_YEAR, matchFirstOrNull, utils;
+
+utils = require('../utils');
+
+R_BOOK_ID = /subject\/(\d+)/;
+
+R_ISBN = /ISBN:\s*(.*)/;
+
+R_AUTHOR = /作者\s*:\s*(.*)/;
+
+R_PUBLISHER = /出版社\s*:\s*(.*)/;
+
+R_PUBLISH_YEAR = /出版年:\s*(.*)/;
+
+matchFirstOrNull = function(pattern, haystack) {
+  var rv;
+  rv = pattern.exec(haystack);
+  if (rv !== null) {
+    rv = rv[1].trim();
+  }
+  return rv;
+};
+
+module.exports = {
+  parseBookItemPage: function(content) {
+    var bookInfoContent, bookMeta, isbn, m;
+    bookInfoContent = ($('#info', content)).text();
+    m = function(pattern) {
+      return matchFirstOrNull(pattern, bookInfoContent);
+    };
+    isbn = m(R_ISBN);
+    bookMeta = {
+      id: matchFirstOrNull(R_BOOK_ID, location.href),
+      title: $('h1 span', content).text().trim(),
+      author: m(R_AUTHOR),
+      publisher: m(R_PUBLISHER),
+      publishYear: m(R_PUBLISH_YEAR),
+      isbn: isbn,
+      isbn10: utils.convertISBN(isbn, 10),
+      isbn13: utils.convertISBN(isbn, 13)
+    };
+    return bookMeta;
+  },
+  parseSearchPage: function(content) {
+    var $input;
+    $input = $('#inp-query', content);
+    return $input.val();
+  },
+  parseDouListItem: function($item) {
+    var $link, bookMeta, content;
+    $link = $(($('.pl2 a', $item))[1]);
+    content = ($('p.pl', $item)).text();
+    bookMeta = {
+      id: matchFirstOrNull(R_BOOK_ID, $link.attr('href')),
+      title: $link.text().trim(),
+      author: matchFirstOrNull(R_AUTHOR, content),
+      publisher: matchFirstOrNull(R_PUBLISHER, content),
+      $item: $item
+    };
+    return bookMeta;
+  },
+  parseListPage: function(content) {
+    var $i;
+    return (function() {
+      var _i, _len, _ref, _results;
+      _ref = $('.doulist_item', content);
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        $i = _ref[_i];
+        _results.push(this.parseDouListItem($i));
+      }
+      return _results;
+    }).call(this);
+  }
+};
+
+},{"../utils":18}],9:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"./douban":8,"./library":10}],10:[function(require,module,exports){
+var templates, utils;
+
+utils = require('../utils');
+
+templates = (require('../templates')).library;
+
+module.exports = {
+  parseQueryResult: function($content) {
+    var $cols, bookInfos, ctrlno, getColText, i;
+    $cols = (function() {
+      var _i, _len, _ref, _results;
+      _ref = $content.children;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        i = _ref[_i];
+        _results.push($(i));
+      }
+      return _results;
+    })();
+    if ($cols.length < 9) {
+      return;
+    }
+    getColText = function(idx) {
+      return $cols[idx].text().trim();
+    };
+    ctrlno = $('input', $cols[0]).attr('value').trim();
+    bookInfos = {
+      title: getColText(1),
+      ctrlno: ctrlno,
+      author: getColText(2),
+      publisher: getColText(3),
+      location: getColText(5),
+      url: templates.bookUrl(ctrlno),
+      remains: parseInt(getColText(7), 10),
+      total: parseInt(getColText(6), 10)
+    };
+    return bookInfos;
+  },
+  parseQueryResults: function(rawContent) {
+    var $page, content, result;
+    content = utils.clean(rawContent);
+    $page = function(selector) {
+      return $(selector, content);
+    };
+    if ($page('#searchnotfound').length !== 0) {
+      return;
+    }
+    return (function() {
+      var _i, _len, _ref, _results;
+      _ref = $page('tbody tr');
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        result = _ref[_i];
+        _results.push(this.parseQueryResult(result));
+      }
+      return _results;
+    }).call(this);
+  },
+  parseDoubanReference: function() {
+    var bookId;
+    bookId = /douban_ref=(.*)/.exec(document.URL);
+    if (bookId) {
+      return bookId[1];
+    }
+  }
+};
+
+},{"../templates":16,"../utils":18}],11:[function(require,module,exports){
+var parser, templates, utils;
+
+utils = require('../utils');
+
+parser = (require('../parser')).douban;
+
+templates = (require('../templates')).douban;
+
+module.exports = {
+  queryItem: function(bookId) {
+    var dfd;
+    dfd = new $.Deferred;
     GM_xmlhttpRequest({
-        method: 'GET',
-        url: 'http://www.baidu.com/s?ie=utf-8&wd=' +
-                encodeURIComponent(keyword),
-        overrideMimeType: 'text/xml; charset=gb2312',
-        onload: function(resp) {
-            if (resp.status < 200 || resp.status > 300) {
-                return;
-            }
-            var keywordGB = String(
-                resp.responseText.match(/word=[^'"&]+['"&]/i))
-                                 .replace(/word=|['"&]/ig,'');
-            /* it's gb2312 now */
-            dfd.resolve(keywordGB);
-        },
-        onerror: function() {
-            return;
+      method: 'GET',
+      url: templates.queryItem(bookId),
+      onload: function(resp) {
+        var bookMeta, content;
+        if (resp.status !== 200) {
+          dfd.resolve;
+          return;
         }
+        content = utils.clean(resp.responseText);
+        bookMeta = parser.parseBookItemPage($(content).filter('div#wrapper'));
+        return dfd.reject(bookMeta);
+      }
     });
-
     return dfd.promise();
+  }
 };
 
-/**
- * utils.tmpl
- *
- * 提供类似 mustache 的语法，只提供
- * 变量代换
- *
- * example: {{ name }}
- */
-helper.utils.tmpl = function(str, data) {
-    var re = /\{\{([\w ]+)\}\}/, ret = str;
-    var r;
-
-    while ((r = re.exec(ret)) !== null) {
-        ret = ret.replace(r[0], data[r[1].trim()]);
-    }
-
-    return ret;
+},{"../parser":9,"../templates":16,"../utils":18}],12:[function(require,module,exports){
+module.exports = {
+  douban: require('./douban'),
+  library: require('./library'),
+  local: require('./local')
 };
 
-/**
- * utils.query_factory
- *
- * 查询方法的工厂函数。
- * 因为javascript 中 `xhr` 是异步操作，而一些逻辑是有先后顺序的，
- * 所以用 jquery 里的 `deferred` 对象来实现顺序调用。
- *
- * @param meta  查询书籍的基本信息（书名、出版社、 isbn）
- * @param cmp   用作比较当前书籍和图书馆查询结果
- */
-helper.utils.query_factory = function(type, meta, cmp) {
-    return function(value) {
-        var dfd = new $.Deferred();
-        var query_url = helper.tmpl.query_url(type, value);
+},{"./douban":11,"./library":13,"./local":14}],13:[function(require,module,exports){
+var parser, publisherFilterFactory, queryFactory, templates, utils;
 
-        GM_xmlhttpRequest({
-            method: 'GET',
-            url: query_url,
-            onload: function(resp) {
-                var result = helper.parser.results(resp.responseText,
-                                                   query_url, meta,
-                                                   cmp);
-                if (result.foundc) {
-                    dfd.resolve(result);
-                } else {
-                    dfd.reject(result);
-                }
-            }
-        });
+parser = (require('../parser')).library;
 
-        return dfd.promise();
-    };
-};
+templates = (require('../templates')).library;
 
-/**
- * utils.cache
- *
- * 查询结果缓存函数，将查询结果缓存到 `localStorage` 中
- * `0.3.2` 加入
- *
- * @param key       书籍的 id
- * @param value     书籍信息
- * @return string   书籍信息 || null 
- */
-helper.utils.cache = function(key, value) {
-    key = 'helper.library' + key;
+utils = require('../utils');
 
-    if (typeof value !== 'undefined') {
-        localStorage.setItem(key, JSON.stringify(value));
-    } else {
-        value = JSON.parse(localStorage.getItem(key));
-    }
-    return value;
-};
-
-/**
- * utils.clean
- *
- * 将 ajax 请求回来的 html 中包含的 img/script/link/style 标签去掉
- * 减少无谓的请求
- * `0.3.3` 加入
- *
- * @param content   原始 html
- * @return string   清理后的 html
- */
-helper.utils.clean = function(content) {
-    var tags = [
-       /<img.*>/gi,
-       /<script.*>.*<\/script>/gi,
-       /<link.*>.*<\/link>/gi,
-       /<style.*>.*<\/style>/gi
-    ];
-
-    for (var i = 0;i < tags.length;i++) {
-        content = content.replace(tags[i], '');
-    }
-
-    return content;
-};
-
-// Source: src/tmpl.js
-/* templating */
-
-helper.tmpl.query_url = function(type, value) {
-    return helper.utils.tmpl(
-        helper.url + 'searchresult.aspx?dp=50&{{ type }}={{ value }}',
-        {type: type, value: value}
-    );
-};
-
-helper.tmpl.library_book_url= function(ctrlno) {
-    return helper.url + 'bookinfo.aspx?ctrlno=' + ctrlno;
-};
-
-// Source: src/parser.js
-/* parser */
-
-/**
- * parser.result
- *
- * 解析查询结果 `table` 中的一个 `tr`
- */
-helper.parser.result = function(buffer) {
-    var c = $(buffer).children();
-    if (c.length < 9) {
-        return null;
-    }
-
-    return {
-        name: $(c[1]).text().trim(),
-        ctrlno: $('input', c[0]).attr('value').trim(),
-        author: $(c[2]).text().trim(),
-        publisher: $(c[3]).text().trim(),
-        location: $(c[5]).text().trim(),
-        total: parseInt($(c[6]).text().trim(), 10),
-        remains: parseInt($(c[7]).text().trim(), 10)
-    };
-};
-
-/**
- * parser.results
- *
- * 解析查询结果的 `table`
- *
- * @return object {
- *      remains:    剩余总本数
- *      total:      总本数
- *      foundc:     是否有找到，非 0 表示找到类似条目的数目
- *      url:        查询 url
- * }
- */
-helper.parser.results = function(buffer, url, meta, cmp) {
-    meta = meta || {};
-    var ret = {
-        id: meta.id || null,
-        remains: 0,
-        total: 0,
-        foundc: 0,
-        location: '',
-        url: url,
-        view: 0
-    };
-
-    buffer = helper.utils.clean(buffer);
-    var not_found = $('#searchnotfound', buffer);
-    if (not_found.length === 0) {
-        /* found the books */
-        var r, i , len;
-        var results = $('tbody tr', buffer);
-        ret.foundc = $('#ctl00_ContentPlaceHolder1_countlbl', buffer).html();
-        ret.foundc = parseInt(ret.foundc, 10);
-        for (i = 0 , len =  results.length; i < len;i ++) {
-            r = helper.parser.result(results[i]);
-            if (r !== null && cmp(r, meta)) {
-                ret.url = helper.tmpl.library_book_url(r.ctrlno);
-                ret.remains += r.remains;
-                ret.total += r.total;
-                ret.location = r.location;
-                break;
-            }
-        }
-    }
-
-    return ret;
-};
-
-helper.parser.book_meta = function(raw) {
-    var publisher = /出版社: (.*)/.exec($('#info', raw).text());
-    if (publisher !== null) {
-        publisher = publisher[1].trim();
-    }
-    var isbn = /ISBN: (.*)/.exec($('#info', raw).text());
-    if (isbn !== null) {
-        isbn = isbn[1].trim();
-    }
-    var author = /作者: (.*)/.exec($('#info', raw).text());
-    if (author !== null) {
-        author = author[1].trim();
-    }
-    var publish_time = /出版年: (.*)/.exec($('#info', raw).text());
-    if (publish_time !== null) {
-        publish_time = publish_time[1].trim();
-    }
-    var id = /subject\/(\d+)/.exec(location.href);
-    if (id.length > 1) {
-        id = id[1];
-    } else {
-        id = null;
-    }
-
-    return {
-        id: id,
-        title: $('h1 span', raw).text(),
-        author: author,
-        publisher: publisher,
-        publish_time: publish_time,
-        isbn: isbn,
-        isbn10: helper.utils.convertISBN(isbn, 10),
-        isbn13: helper.utils.convertISBN(isbn, 13)
-    };
-};
-
-helper.parser.doulist = function(raw) {
-    var books = [];
-
-    $('.doulist_item').each(function(i, e) {
-        var book = $('.pl2 a', e),
-            id, publisher, author;
-
-        id = /subject\/(\d+)/.exec($(book).attr('href'));
-        if (id.length > 1) {
-            id = id[1];
-        } else {
-            id = null;
-        }
-        publisher = /出版社: (.*)/.exec($('p.pl', e).text());
-        if (publisher !== null) {
-            publisher = publisher[1].trim();
-        }
-        author = /作者: (.*)/.exec($('p.pl', e).text());
-        if (author !== null) {
-            author = author[1].trim();
-        }
-
-        books.push({
-            id: id,
-            title: $(book).text().trim(),
-            author: author,
-            publisher: publisher,
-            _context: $(e)
-        });
-    });
-
-    return books;
-};
-
-// Source: src/pages.doulist.js
-// /doulist/xxx
-// `0.4.0` 加入
-helper.pages.doulist = function() {
-    var inject = function(book, result) {
-        var tmpl = '<br />';
-
-        var t = function(buffer) {
-            return helper.utils.tmpl(
-                '还剩 {{ remains }} 本',
-                {remains: buffer}
-            );
-        };
-        var l = function(url, content) {
-            return helper.utils.tmpl(
-                'GDUT: <a target="_blank" href={{url}}>{{content}}</a><br />',
-                {url: url, content: content}
-            );
-        };
-        var p = function(buffer) {
-            return helper.utils.tmpl(
-                '地点: 在 {{ location }} <br />',
-                {location: buffer}
-            );
-        };
-
-        if (result.foundc > 0) {
-            if (result.total || result.remains) {
-                tmpl += l(result.url, t(result.remains));
-
-                if (result.location) {
-                    tmpl += p(result.location);
-                }
-
-                helper.utils.cache(book.id, result);
-            }
-        }
-
-        $('p.pl', book._context).append(tmpl);
-    };
-
-    var publisher_cmp = function(result, meta) {
-        return (result.publisher === meta.publisher);
-    };
-
-    var books = helper.parser.doulist($('html'));
-
-    var query_title = function(book) {
-        var dfd = new $.Deferred();
-
-        var dfd_reject = function(stuff) {
-            dfd.reject(book);
-        };
-
-        var fn = helper.utils.query_factory('title_f', book, publisher_cmp);
-        helper.utils.gb2312(book.title).then(function(gb2312_title) {
-            fn(gb2312_title)
-            .then(function(result) {
-                inject(book, result);
-            })
-            .fail(dfd_reject);
-        }).fail(dfd_reject);
-
-        return dfd.promise();
-    };
-
-    var query_cache = function(book) {
-        var dfd = new $.Deferred();
-
-        cache = helper.utils.cache(book.id);
-        if (!cache || cache.view > helper.refresh) {
-            dfd.reject(book);
-        } else {
-            inject(book, cache);
-            dfd.resolve(cache);
-        }
-
-        return dfd.promise();
-    };
-
-    for (var i = 0;i < books.length;i++) {
-        query_cache(books[i])
-            .fail(query_title);
-    }
-};
-
-// Source: src/pages.readerrecommend.js
-// library reader recommend
-helper.pages.readerrecommend = function() {
-    var book = /douban_ref=(.*)+/.exec(document.URL);
-
-    if (!book) {
-        return;
-    }
-
+queryFactory = function(queryUrlBuilder, filter) {
+  return function(queryValue) {
+    var dfd, queryUrl;
+    dfd = new $.Deferred;
+    queryUrl = queryUrlBuilder(queryValue);
     GM_xmlhttpRequest({
-        method: 'GET',
-        url: book[1],
-        onload: function(resp) {
-            var book_meta;
-
-            if (resp.status !== 200) {
-                return;
-            }
-    
-            /* FIXME I don't know why $('#wrapper', resp.responseText)
-             *       not work here
-             */
-            book_meta = helper.parser.book_meta(
-                $(resp.responseText).filter('div#wrapper')
-            );
-
-            $('#ctl00_ContentPlaceHolder1_titletb').val(
-                book_meta.title
-            );
-            $('#ctl00_ContentPlaceHolder1_isbntb').val(
-                book_meta.isbn
-            );
-            $('#ctl00_ContentPlaceHolder1_publishertb').val(
-                book_meta.publisher
-            );
-            $('#ctl00_ContentPlaceHolder1_publishdatetb').val(
-                book_meta.publish_time
-            );
+      method: 'GET',
+      url: queryUrl,
+      onload: function(resp) {
+        var parsedResults, result;
+        parsedResults = parser.parseQueryResults(resp.responseText);
+        if (!parsedResults) {
+          dfd.resolve(parsedResults);
+          return;
         }
+        result = filter(queryValue, parsedResults);
+        if (result) {
+          return dfd.reject(result);
+        } else {
+          return dfd.resolve({
+            queryUrl: queryUrl,
+            results: parsedResults
+          });
+        }
+      }
     });
+    return dfd.promise();
+  };
 };
 
-
-
-// Source: src/pages.subject.js
-// /subject/xxx
-helper.pages.subject = function() {
-    var inject = function(result) {
-        var r = function(buffer) {
-            return helper.utils.tmpl(
-                ' | <a href="{{ url }}readerrecommend.aspx' +
-                '?douban_ref={{ href }}">去荐购</a>',
-                {href: buffer, url: helper.url}
-            );
-        };
-        var t = function(buffer) {
-            return helper.utils.tmpl(
-                '<span class="pl">GDUT:</span> {{ content }}<br />',
-                 {content: buffer}
-            );
-        };
-        var l = function(url, content) {
-            return helper.utils.tmpl(
-                '&nbsp;<a target="_blank" href={{url}}>{{content}}</a>',
-                {url: url, content: content}
-            );
-        };
-        var p = function(location) {
-            return helper.utils.tmpl(
-                ' 在 {{ location }}',
-                {location: location}
-            );
-        };
-
-        var info = $('#info');
-        var tmpl = '';
-
-        if (result.foundc <= 0) {
-            tmpl = t(l(result.url, '没有找到哦') + r(document.URL));
-        } else {
-            if (result.total === 0 && result.remains === 0) {
-                tmpl = t(l(result.url, '找到 ' + result.foundc + ' 本类似的'));
-            } else {
-                tmpl = t(l(result.url, '还剩 ' + result.remains + ' 本'));
-            }
-            if (result.location) {
-                tmpl += p(result.location);
-            }
-
-            result.view += 1;
-            helper.utils.cache(result.id, result);
-        }
-        info.append(tmpl);
-    };
-
-    var publisher_cmp = function(result, meta) {
-        return (result.publisher === meta.publisher);
-    };
-
-    var book = helper.parser.book_meta($(document));
-
-    var query_title = function() {
-        var dfd = new $.Deferred();
-
-        var fn = helper.utils.query_factory('title_f', book, publisher_cmp);
-        helper.utils.gb2312(book.title).then(function(gb2312_title) {
-            fn(gb2312_title).then(inject).fail(dfd.reject);
-        }).fail(dfd.reject);
-
-        return dfd.promise();
-    };
-    var query_isbn = function() {
-        var dfd = new $.Deferred();
-
-        var fn = helper.utils.query_factory('isbn_f', book, publisher_cmp);
-        fn(book.isbn13).fail(function() {
-            fn(book.isbn10).then(inject).fail(dfd.reject);
-        }).then(inject);
-
-        return dfd.promise();
-    };
-    var query_cache = function() {
-        var dfd = new $.Deferred();
-
-        cache = helper.utils.cache(book.id);
-        if (!cache || cache.view > helper.refresh) {
-            dfd.reject(cache);
-        } else {
-            inject(cache);
-            dfd.resolve(cache);
-        }
-
-        return dfd.promise();
-    };
-
-    query_cache().fail(function() {
-        query_isbn().fail(function() {
-            query_title().fail(inject);
-        });
-    });
-};
-
-// Source: src/pages.subject_search.js
-// /subject_search
-helper.pages.subject_search = function() {
-    var query_word = function() {
-        return $('#inp-query').attr('value');
-    };
-
-    var inject = function(result) {
-        var s = function(desc) {
-            return helper.utils.tmpl(
-                '<div class="mb20"><div class="hd">' +
-                    '<h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2>' +
-                '</div>' +
-                '<div class="bd"><p class="pl">{{desc}}</p></div>',
-                {desc: desc}
-            );
-        };
-        
-        var l = function(url, content) {
-            return helper.utils.tmpl(
-                '&nbsp;<a target="_blank" href={{url}}>{{content}}</a>',
-                {url: url, content: content}
-            );
-        };
-
-        var r = $('#content .aside .mb20');
-        var tmpl;
-
-        if (result.foundc <= 0) {
-            tmpl = s('没有找到哦');
-        } else {
-            tmpl = s(l(result.url, '找到 ' + result.foundc + ' 本类似的'));
-        }
-        $(tmpl).insertBefore(r);
- 
-    };
-
-    var cmp = function(a, b) {return false;};
-
-    var query_anywords = function() {
-        var dfd = new $.Deferred();
-
-        var fn = helper.utils.query_factory('anywords', null, cmp);
-        helper.utils.gb2312(query_word()).then(function(name) {
-            fn(name).then(inject).fail(dfd.reject);
-        }).fail(dfd.reject);
-
-        return dfd.promise();
-    };
-
-    query_anywords().fail(inject);
-};
-
-
-// Source: src/kick.js
-helper.kick = function() {
-    var type = /[com, 81]\/([\w]+)\/*/.exec(document.URL);
-    type = (type !== null) ? (type[1].trim()) : ('index');
-
-    /* dispatch */
-    if (type === 'subject') {
-        helper.pages.subject();
-    } else if (type === 'subject_search') {
-        helper.pages.subject_search();
-    } else if (type === 'readerrecommend') {
-        helper.pages.readerrecommend();
-    } else if (type === 'doulist') {
-        helper.pages.doulist();
-    } else {
-        console.log(type);
+publisherFilterFactory = function(bookMeta) {
+  return function(value, results) {
+    var result, _i, _len;
+    for (_i = 0, _len = results.length; _i < _len; _i++) {
+      result = results[_i];
+      if (result.publisher === bookMeta.publisher) {
+        return result;
+      }
     }
+    return null;
+  };
 };
 
-helper.kick();
+module.exports = {
+  keyword: function(keyword) {
+    var dfd, keywordQuery;
+    dfd = new $.Deferred;
+    keywordQuery = queryFactory(templates.queryKeywordURLBuilder, function() {
+      return null;
+    });
+    utils.convertGB2312(keyword).then(keywordQuery).always(dfd.resolve);
+    return dfd.promise();
+  },
+  title: function(bookMeta) {
+    var dfd, titleQuery;
+    dfd = new $.Deferred;
+    titleQuery = queryFactory(templates.queryTitleURLBuilder, publisherFilterFactory(bookMeta));
+    utils.convertGB2312(bookMeta.title).then(titleQuery).then(dfd.resolve).fail(dfd.reject);
+    return dfd.promise();
+  },
+  isbn: function(bookMeta) {
+    var dfd, isbnQuery;
+    dfd = new $.Deferred;
+    isbnQuery = queryFactory(templates.queryISBNURLBuilder, publisherFilterFactory(bookMeta));
+    isbnQuery(bookMeta.isbn10).then(function() {
+      return isbnQuery(bookMeta.isbn13);
+    }).then(dfd.resolve).fail(dfd.reject);
+    return dfd.promise();
+  }
+};
+
+},{"../parser":9,"../templates":16,"../utils":18}],14:[function(require,module,exports){
+var config, utils;
+
+utils = require('../utils');
+
+config = require('../config');
+
+module.exports = {
+  bookId: function(id) {
+    var bookInfos, dfd;
+    dfd = new $.Deferred;
+    bookInfos = utils.cache.read(id);
+    if (bookInfos === null) {
+      utils.errLog("" + id + " not found from cache.");
+      dfd.resolve(bookInfos);
+    } else {
+      if (bookInfos._viewTimes == null) {
+        bookInfos._viewTimes = 0;
+      }
+      if (bookInfos._viewTimes > config.localCacheLife) {
+        utils.errLog("" + id + " hits too many times from cache, throw it.");
+        dfd.resolve(bookInfos);
+      } else {
+        utils.log("Found " + id + " from cache.");
+        dfd.reject(bookInfos);
+      }
+    }
+    return dfd.promise();
+  }
+};
+
+},{"../config":1,"../utils":18}],15:[function(require,module,exports){
+var libraryTmpl;
+
+libraryTmpl = require('./library');
+
+module.exports = {
+  subject: {
+    bookInfos: function(infos) {
+      return "<span class=\"pl\">GDUT:</span> \n<a href=\"" + infos.url + "\" target=\"_blank\">还剩 " + infos.remains + " 本</a>\n<br />\n在 " + infos.location;
+    },
+    notFound: function(infos) {
+      var recommendUrl;
+      recommendUrl = libraryTmpl.recommendUrl(infos);
+      return "<span class=\"pl\">GDUT:</span> \n没有找到噢，<a href=\"" + recommendUrl + "\" target=\"_blank\">去荐购</a>";
+    },
+    foundMultiple: function(infos) {
+      return "<span class=\"pl\">GDUT:</span> \n<a href=\"" + infos.queryUrl + "\" target=\"_blank\">找到 " + infos.results.length + " 本类似的</a>";
+    }
+  },
+  subjectSearch: {
+    result: function(infos) {
+      return "<div class=\"mb20\">\n  <div class=\"hd\">\n    <h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2>\n  </div>\n  <div class=\"bd\">\n    <p class=\"pl\">\n      <a href=\"" + infos.queryUrl + "\" target=\"_blank\">\n        找到 " + infos.results.length + " 本类似的\n      </a>\n    </p>\n  </div>\n</div>";
+    },
+    notFound: function() {
+      return "<div class=\"mb20\">\n  <div class=\"hd\">\n    <h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2>\n  </div>\n  <div class=\"bd\">\n    <p class=\"pl\">没有找到噢</p>\n  </div>\n</div>";
+    }
+  },
+  douList: {
+    bookInfos: function(infos) {
+      return "<br />\nGDUT: <a href=\"" + infos.url + "\" target=\"_blank\">还剩 " + infos.remains + " 本</a>\n<br />\n地点: 在 " + infos.location;
+    }
+  },
+  queryItem: function(bookId) {
+    return "http://book.douban.com/subject/" + bookId + "/";
+  }
+};
+
+},{"./library":17}],16:[function(require,module,exports){
+module.exports = {
+  library: require('./library'),
+  douban: require('./douban')
+};
+
+},{"./douban":15,"./library":17}],17:[function(require,module,exports){
+var config;
+
+config = require('../config');
+
+module.exports = {
+  queryISBNURLBuilder: function(isbn) {
+    return "" + config.libraryBaseUrl + "/searchresult.aspx?dp=50&isbn_f=" + isbn;
+  },
+  queryTitleURLBuilder: function(title) {
+    return "" + config.libraryBaseUrl + "/searchresult.aspx?dp=50&title=" + title;
+  },
+  queryKeywordURLBuilder: function(keyword) {
+    return "" + config.libraryBaseUrl + "/searchresult.aspx?dp=50&anywords=" + keyword;
+  },
+  bookUrl: function(ctrlno) {
+    return "" + config.libraryBaseUrl + "/bookinfo.aspx?ctrlno=" + ctrlno;
+  },
+  recommendUrl: function(infos) {
+    return "" + config.libraryBaseUrl + "/readerrecommend.aspx?douban_ref=" + infos.id;
+  }
+};
+
+},{"../config":1}],18:[function(require,module,exports){
+var config, utils;
+
+config = require('./config');
+
+module.exports = utils = {
+  log: function(something) {
+    return console.log(something);
+  },
+  errLog: function(something) {
+    return console.error(something);
+  },
+  convertISBN: function(isbn, length) {
+    var parsedISBN;
+    parsedISBN = ISBN.parse(isbn);
+    switch (length) {
+      case 10:
+        return parsedISBN.asIsbn10(true);
+      case 13:
+        return parsedISBN.asIsbn13(true);
+    }
+  },
+  convertGB2312: function(keyword) {
+    var dfd, encodedKeyword;
+    dfd = new $.Deferred;
+    encodedKeyword = encodeURIComponent(keyword);
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url: "http://www.baidu.com/s?ie=utf-8&wd=" + encodedKeyword,
+      overrideMimeType: 'text/xml; charset=gb2312',
+      onload: function(resp) {
+        var gb2312Keyword;
+        if (resp.status < 200 || resp.status > 300) {
+          utils.errLog("Failed to convert " + keyword + " to gb2312.");
+          dfd.reject(keyword);
+          return;
+        }
+        gb2312Keyword = String(resp.responseText.match(/word=[^'"&]+['"&]/i)).replace(/word=|['"&]/ig, '');
+        return dfd.resolve(gb2312Keyword);
+      },
+      onerror: function() {
+        return utils.errLog("Failed to convert " + keyword + " to gb2312.");
+      }
+    });
+    return dfd.promise();
+  },
+  cache: {
+    read: function(key) {
+      var item, realKey;
+      realKey = "" + config.localCacheKeyPrefix + key;
+      item = localStorage.getItem(realKey);
+      return JSON.parse(localStorage.getItem(realKey));
+    },
+    write: function(key, value) {
+      var realKey;
+      realKey = "" + config.localCacheKeyPrefix + key;
+      return localStorage.setItem(realKey, JSON.stringify(value));
+    },
+    writeBookInfos: function(key, bookInfos) {
+      if (bookInfos._viewTimes == null) {
+        bookInfos._viewTimes = 0;
+      }
+      bookInfos._viewTimes = bookInfos._viewTimes + 1;
+      return utils.cache.write(key, bookInfos);
+    }
+  },
+  clean: function(content) {
+    var pattern, tags, _i, _len;
+    tags = [/<img.*>/gi, /<script.*>.*<\/script>/gi, /<link.*>.*<\/link>/gi, /<style.*>.*<\/style>/gi];
+    for (_i = 0, _len = tags.length; _i < _len; _i++) {
+      pattern = tags[_i];
+      content = content.replace(pattern, '');
+    }
+    return content;
+  }
+};
+
+},{"./config":1}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18])

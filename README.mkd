@@ -77,6 +77,8 @@ Happy hacking. :)
 
 ## Changelog
 
+v0.5.0 使用 [coffeescript](http://coffeescript.org/) 重写了脚本
+
 v0.4.0 添加豆列查询馆藏位置功能
 
 v0.3.3 减少不必要的静态文件请求
