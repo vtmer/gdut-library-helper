@@ -20,7 +20,6 @@ module.exports =
           dfd.resolve
           return
 
-        # TODO filter extra resouce request
         content = utils.clean resp.responseText
         bookMeta = parser.parseBookItemPage $(content).filter('div#wrapper')
 
