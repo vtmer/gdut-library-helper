@@ -87,7 +87,7 @@ BasePageHandler = (function() {
 module.exports = BasePageHandler;
 
 },{}],5:[function(require,module,exports){
-var BasePageHandler, BookItemHandler, SearchHandler, parser, query, templates, utils,
+var BasePageHandler, BookItemHandler, DouListHandler, DoubanPageHandler, SearchHandler, parser, query, templates, utils,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -101,6 +101,21 @@ templates = (require('../templates')).douban;
 
 BasePageHandler = require('./_base');
 
+DoubanPageHandler = (function(_super) {
+  __extends(DoubanPageHandler, _super);
+
+  function DoubanPageHandler() {
+    return DoubanPageHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  DoubanPageHandler.prototype.itemKey = function(bookMeta) {
+    return "douban_" + bookMeta.id;
+  };
+
+  return DoubanPageHandler;
+
+})(BasePageHandler);
+
 BookItemHandler = (function(_super) {
   __extends(BookItemHandler, _super);
 
@@ -108,17 +123,9 @@ BookItemHandler = (function(_super) {
     return BookItemHandler.__super__.constructor.apply(this, arguments);
   }
 
-  BookItemHandler.prototype.itemKey = function(bookMeta) {
-    return "douban_" + bookMeta.id;
-  };
-
   BookItemHandler.prototype.inject = function(bookInfos, bookMeta) {
     ($('#info')).append(templates.subject.bookInfos(bookInfos));
-    if (bookInfos._viewTimes == null) {
-      bookInfos._viewTimes = 0;
-    }
-    bookInfos._viewTimes = bookInfos._viewTimes + 1;
-    return utils.cache.write(this.itemKey(bookMeta), bookInfos);
+    return utils.cache.writeBookInfos(this.itemKey(bookMeta), bookInfos);
   };
 
   BookItemHandler.prototype.injectFail = function(bookInfos, bookMeta) {
@@ -151,7 +158,7 @@ BookItemHandler = (function(_super) {
 
   return BookItemHandler;
 
-})(BasePageHandler);
+})(DoubanPageHandler);
 
 SearchHandler = (function(_super) {
   __extends(SearchHandler, _super);
@@ -172,17 +179,58 @@ SearchHandler = (function(_super) {
 
   SearchHandler.prototype.handle = function() {
     var keyword;
-    keyword = parser.parseSearchPage();
+    keyword = parser.parseSearchPage($('body'));
     return query.library.keyword(keyword).always(this.inject);
   };
 
   return SearchHandler;
 
-})(BasePageHandler);
+})(DoubanPageHandler);
+
+DouListHandler = (function(_super) {
+  __extends(DouListHandler, _super);
+
+  function DouListHandler() {
+    return DouListHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  DouListHandler.prototype.inject = function(bookInfos, bookMeta) {
+    if (!bookMeta.$item) {
+      return;
+    }
+    ($('p.pl', bookMeta.$item)).append(templates.douList.bookInfos(bookInfos));
+    return utils.cache.writeBookInfos(this.itemKey(bookMeta), bookInfos);
+  };
+
+  DouListHandler.prototype.handleBook = function(bookMeta) {
+    return query.local.bookId(this.itemKey(bookMeta)).then(function() {
+      return query.library.title(bookMeta);
+    }).fail((function(_this) {
+      return function(bookInfos) {
+        return _this.inject(bookInfos, bookMeta);
+      };
+    })(this));
+  };
+
+  DouListHandler.prototype.handle = function() {
+    var book, _i, _len, _ref, _results;
+    _ref = parser.parseListPage($('body'));
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      book = _ref[_i];
+      _results.push(this.handleBook(book));
+    }
+    return _results;
+  };
+
+  return DouListHandler;
+
+})(DoubanPageHandler);
 
 module.exports = {
   item: new BookItemHandler,
-  search: new SearchHandler
+  search: new SearchHandler,
+  list: new DouListHandler
 };
 
 },{"../parser":9,"../query":12,"../templates":16,"../utils":18,"./_base":4}],6:[function(require,module,exports){
@@ -243,9 +291,9 @@ R_BOOK_ID = /subject\/(\d+)/;
 
 R_ISBN = /ISBN:\s*(.*)/;
 
-R_AUTHOR = /作者:\s*(.*)/;
+R_AUTHOR = /作者\s*:\s*(.*)/;
 
-R_PUBLISHER = /出版社:\s*(.*)/;
+R_PUBLISHER = /出版社\s*:\s*(.*)/;
 
 R_PUBLISH_YEAR = /出版年:\s*(.*)/;
 
@@ -278,10 +326,36 @@ module.exports = {
     };
     return bookMeta;
   },
-  parseSearchPage: function() {
+  parseSearchPage: function(content) {
     var $input;
-    $input = $('#inp-query');
+    $input = $('#inp-query', content);
     return $input.val();
+  },
+  parseDouListItem: function($item) {
+    var $link, bookMeta, content;
+    $link = $(($('.pl2 a', $item))[1]);
+    content = ($('p.pl', $item)).text();
+    bookMeta = {
+      id: matchFirstOrNull(R_BOOK_ID, $link.attr('href')),
+      title: $link.text().trim(),
+      author: matchFirstOrNull(R_AUTHOR, content),
+      publisher: matchFirstOrNull(R_PUBLISHER, content),
+      $item: $item
+    };
+    return bookMeta;
+  },
+  parseListPage: function(content) {
+    var $i;
+    return (function() {
+      var _i, _len, _ref, _results;
+      _ref = $('.doulist_item', content);
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        $i = _ref[_i];
+        _results.push(this.parseDouListItem($i));
+      }
+      return _results;
+    }).call(this);
   }
 };
 
@@ -531,6 +605,11 @@ module.exports = {
       return "<div class=\"mb20\">\n  <div class=\"hd\">\n    <h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2>\n  </div>\n  <div class=\"bd\">\n    <p class=\"pl\">没有找到噢</p>\n  </div>\n</div>";
     }
   },
+  douList: {
+    bookInfos: function(infos) {
+      return "<br />\nGDUT: <a href=\"" + infos.url + "\" target=\"_blank\">还剩 " + infos.remains + " 本</a>\n<br />\n地点: 在 " + infos.location;
+    }
+  },
   queryItem: function(bookId) {
     return "http://book.douban.com/subject/" + bookId + "/";
   }
@@ -622,6 +701,13 @@ module.exports = utils = {
       var realKey;
       realKey = "" + config.localCacheKeyPrefix + key;
       return localStorage.setItem(realKey, JSON.stringify(value));
+    },
+    writeBookInfos: function(key, bookInfos) {
+      if (bookInfos._viewTimes == null) {
+        bookInfos._viewTimes = 0;
+      }
+      bookInfos._viewTimes = bookInfos._viewTimes + 1;
+      return utils.cache.write(key, bookInfos);
     }
   },
   clean: function(content) {

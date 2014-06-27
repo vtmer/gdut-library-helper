@@ -61,6 +61,14 @@ module.exports = utils =
 
       localStorage.setItem(realKey, JSON.stringify(value))
 
+    # 写入图书记录信息，并将 ``_viewTimes`` 字段增加一
+    writeBookInfos: (key, bookInfos) ->
+      if not bookInfos._viewTimes?
+        bookInfos._viewTimes = 0
+      bookInfos._viewTimes = bookInfos._viewTimes + 1
+
+      utils.cache.write(key, bookInfos)
+
   # 去除外部资源的请求链接
   clean: (content) ->
     tags = [

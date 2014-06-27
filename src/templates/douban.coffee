@@ -57,5 +57,14 @@ module.exports =
       </div>
       """
 
+  douList:
+    bookInfos: (infos) ->
+      """
+      <br />
+      GDUT: <a href="#{infos.url}" target="_blank">还剩 #{infos.remains} 本</a>
+      <br />
+      地点: 在 #{infos.location}
+      """
+
   queryItem: (bookId) ->
     "http://book.douban.com/subject/#{bookId}/"
