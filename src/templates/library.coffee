@@ -10,6 +10,9 @@ module.exports =
 
   queryTitleURLBuilder: (title) ->
     "#{config.libraryBaseUrl}/searchresult.aspx?dp=50&title=#{title}"
+  
+  queryKeywordURLBuilder: (keyword) ->
+    "#{config.libraryBaseUrl}/searchresult.aspx?dp=50&anywords=#{keyword}"
 
   bookUrl: (ctrlno) ->
     "#{config.libraryBaseUrl}/bookinfo.aspx?ctrlno=#{ctrlno}"

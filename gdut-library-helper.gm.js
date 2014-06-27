@@ -87,7 +87,7 @@ BasePageHandler = (function() {
 module.exports = BasePageHandler;
 
 },{}],5:[function(require,module,exports){
-var BasePageHandler, BookItemHandler, parser, query, templates, utils,
+var BasePageHandler, BookItemHandler, SearchHandler, parser, query, templates, utils,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -153,8 +153,36 @@ BookItemHandler = (function(_super) {
 
 })(BasePageHandler);
 
+SearchHandler = (function(_super) {
+  __extends(SearchHandler, _super);
+
+  function SearchHandler() {
+    return SearchHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  SearchHandler.prototype.inject = function(infos) {
+    var tmpl;
+    if (!infos) {
+      tmpl = templates.subjectSearch.notFound();
+    } else {
+      tmpl = templates.subjectSearch.result(infos);
+    }
+    return $(tmpl).insertBefore($('#content .aside .mb20'));
+  };
+
+  SearchHandler.prototype.handle = function() {
+    var keyword;
+    keyword = parser.parseSearchPage();
+    return query.library.keyword(keyword).always(this.inject);
+  };
+
+  return SearchHandler;
+
+})(BasePageHandler);
+
 module.exports = {
-  item: new BookItemHandler
+  item: new BookItemHandler,
+  search: new SearchHandler
 };
 
 },{"../parser":9,"../query":12,"../templates":16,"../utils":18,"./_base":4}],6:[function(require,module,exports){
@@ -249,6 +277,11 @@ module.exports = {
       isbn13: utils.convertISBN(isbn, 13)
     };
     return bookMeta;
+  },
+  parseSearchPage: function() {
+    var $input;
+    $input = $('#inp-query');
+    return $input.val();
   }
 };
 
@@ -384,7 +417,7 @@ queryFactory = function(queryUrlBuilder, filter) {
           dfd.resolve(parsedResults);
           return;
         }
-        result = filter(queryValue, parsedResult);
+        result = filter(queryValue, parsedResults);
         if (result) {
           return dfd.reject(result);
         } else {
@@ -413,6 +446,15 @@ publisherFilterFactory = function(bookMeta) {
 };
 
 module.exports = {
+  keyword: function(keyword) {
+    var dfd, keywordQuery;
+    dfd = new $.Deferred;
+    keywordQuery = queryFactory(templates.queryKeywordURLBuilder, function() {
+      return null;
+    });
+    utils.convertGB2312(keyword).then(keywordQuery).always(dfd.resolve);
+    return dfd.promise();
+  },
   title: function(bookMeta) {
     var dfd, titleQuery;
     dfd = new $.Deferred;
@@ -481,6 +523,14 @@ module.exports = {
       return "<span class=\"pl\">GDUT:</span> \n<a href=\"" + infos.queryUrl + "\" target=\"_blank\">找到 " + infos.results.length + " 本类似的</a>";
     }
   },
+  subjectSearch: {
+    result: function(infos) {
+      return "<div class=\"mb20\">\n  <div class=\"hd\">\n    <h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2>\n  </div>\n  <div class=\"bd\">\n    <p class=\"pl\">\n      <a href=\"" + infos.queryUrl + "\" target=\"_blank\">\n        找到 " + infos.results.length + " 本类似的\n      </a>\n    </p>\n  </div>\n</div>";
+    },
+    notFound: function() {
+      return "<div class=\"mb20\">\n  <div class=\"hd\">\n    <h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2>\n  </div>\n  <div class=\"bd\">\n    <p class=\"pl\">没有找到噢</p>\n  </div>\n</div>";
+    }
+  },
   queryItem: function(bookId) {
     return "http://book.douban.com/subject/" + bookId + "/";
   }
@@ -503,6 +553,9 @@ module.exports = {
   },
   queryTitleURLBuilder: function(title) {
     return "" + config.libraryBaseUrl + "/searchresult.aspx?dp=50&title=" + title;
+  },
+  queryKeywordURLBuilder: function(keyword) {
+    return "" + config.libraryBaseUrl + "/searchresult.aspx?dp=50&anywords=" + keyword;
   },
   bookUrl: function(ctrlno) {
     return "" + config.libraryBaseUrl + "/bookinfo.aspx?ctrlno=" + ctrlno;

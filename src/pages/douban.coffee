@@ -46,5 +46,23 @@ class BookItemHandler extends BasePageHandler
       .fail((bookInfos) => @inject(bookInfos, bookMeta))
 
 
+class SearchHandler extends BasePageHandler
+
+  inject: (infos) ->
+    if not infos
+      tmpl = templates.subjectSearch.notFound()
+    else
+      tmpl = templates.subjectSearch.result infos
+
+    $(tmpl).insertBefore($ '#content .aside .mb20')
+
+  handle: ->
+    keyword = parser.parseSearchPage()
+
+    query.library.keyword(keyword)
+      .always(@inject)
+
+
 module.exports =
   item: new BookItemHandler
+  search: new SearchHandler

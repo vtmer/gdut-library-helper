@@ -28,5 +28,34 @@ module.exports =
       <a href="#{infos.queryUrl}" target="_blank">找到 #{infos.results.length} 本类似的</a>
       """
 
+  subjectSearch:
+    result: (infos) ->
+      """
+      <div class="mb20">
+        <div class="hd">
+          <h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2>
+        </div>
+        <div class="bd">
+          <p class="pl">
+            <a href="#{infos.queryUrl}" target="_blank">
+              找到 #{infos.results.length} 本类似的
+            </a>
+          </p>
+        </div>
+      </div>
+      """
+
+    notFound: () ->
+      """
+      <div class="mb20">
+        <div class="hd">
+          <h2>在广工图书馆&nbsp;·&nbsp;·&nbsp;·</h2>
+        </div>
+        <div class="bd">
+          <p class="pl">没有找到噢</p>
+        </div>
+      </div>
+      """
+
   queryItem: (bookId) ->
     "http://book.douban.com/subject/#{bookId}/"

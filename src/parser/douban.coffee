@@ -36,3 +36,8 @@ module.exports =
       isbn13: utils.convertISBN(isbn, 13)
 
     return bookMeta
+
+  # 解析 http://book.douban.com/subject_search?search_text=xxxx
+  parseSearchPage: ->
+    $input = ($ '#inp-query')
+    return $input.val()

@@ -25,7 +25,7 @@ queryFactory = (queryUrlBuilder, filter) ->
           dfd.resolve parsedResults
           return
 
-        result = filter(queryValue, parsedResult)
+        result = filter(queryValue, parsedResults)
         # 找到一个准确的结果
         if result
           dfd.reject result
@@ -49,6 +49,24 @@ publisherFilterFactory = (bookMeta) ->
 
 
 module.exports =
+
+  # 根据任意关键字进行查询
+  keyword: (keyword) ->
+    dfd = new $.Deferred
+
+    keywordQuery = queryFactory(
+      templates.queryKeywordURLBuilder
+      # 提供一个总是会失败的 filter 来保存所有结果
+      -> return null
+    )
+
+    utils.convertGB2312(keyword)
+      # FIXME convertGB2312 失败的情况？
+      .then(keywordQuery)
+      # 永远都只有失败状态
+      .always(dfd.resolve)
+
+    return dfd.promise()
 
   # 根据图书标题进行查询
   title: (bookMeta) ->
