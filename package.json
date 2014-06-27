@@ -1,6 +1,6 @@
 {
   "name": "gdut-library-helper",
-  "version": "0.2.2",
+  "version": "0.5.0",
   "description": "GDUT library helper",
   "main": "gdut-library-helper.js",
   "dependencies": {},
