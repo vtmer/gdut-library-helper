@@ -51,7 +51,7 @@ module.exports = helper = {
   }
 };
 
-},{"./pages":6,"./utils":17}],3:[function(require,module,exports){
+},{"./pages":6,"./utils":18}],3:[function(require,module,exports){
 
 // ==UserScript==
 // @name       GDUT library helper
@@ -157,16 +157,56 @@ module.exports = {
   item: new BookItemHandler
 };
 
-},{"../parser":9,"../query":11,"../templates":15,"../utils":17,"./_base":4}],6:[function(require,module,exports){
+},{"../parser":9,"../query":12,"../templates":16,"../utils":18,"./_base":4}],6:[function(require,module,exports){
 module.exports = {
   douban: require('./douban'),
   library: require('./library')
 };
 
 },{"./douban":5,"./library":7}],7:[function(require,module,exports){
+var BasePageHandler, RecommendHandler, doubanQuery, parser,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
+parser = (require('../parser')).library;
 
-},{}],8:[function(require,module,exports){
+doubanQuery = (require('../query')).douban;
+
+BasePageHandler = require('./_base');
+
+RecommendHandler = (function(_super) {
+  __extends(RecommendHandler, _super);
+
+  function RecommendHandler() {
+    return RecommendHandler.__super__.constructor.apply(this, arguments);
+  }
+
+  RecommendHandler.prototype.inject = function(bookMeta) {
+    ($('#ctl00_ContentPlaceHolder1_titletb')).val(bookMeta.title);
+    ($('#ctl00_ContentPlaceHolder1_authortb')).val(bookMeta.author);
+    ($('#ctl00_ContentPlaceHolder1_isbntb')).val(bookMeta.isbn);
+    ($('#ctl00_ContentPlaceHolder1_publisherb')).val(bookMeta.publisher);
+    return ($('#ctl00_ContentPlaceHolder1_publishdatetb')).val(bookMeta.publishYear);
+  };
+
+  RecommendHandler.prototype.handle = function() {
+    var doubanBookId;
+    doubanBookId = parser.parseDoubanReference();
+    if (!doubanBookId) {
+      return;
+    }
+    return doubanQuery.queryItem(doubanBookId).fail(this.inject);
+  };
+
+  return RecommendHandler;
+
+})(BasePageHandler);
+
+module.exports = {
+  recommend: new RecommendHandler
+};
+
+},{"../parser":9,"../query":12,"./_base":4}],8:[function(require,module,exports){
 var R_AUTHOR, R_BOOK_ID, R_ISBN, R_PUBLISHER, R_PUBLISH_YEAR, matchFirstOrNull, utils;
 
 utils = require('../utils');
@@ -212,7 +252,7 @@ module.exports = {
   }
 };
 
-},{"../utils":17}],9:[function(require,module,exports){
+},{"../utils":18}],9:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
 },{"./douban":8,"./library":10}],10:[function(require,module,exports){
 var templates, utils;
@@ -272,16 +312,55 @@ module.exports = {
       }
       return _results;
     }).call(this);
+  },
+  parseDoubanReference: function() {
+    var bookId;
+    bookId = /douban_ref=(.*)/.exec(document.URL);
+    if (bookId) {
+      return bookId[1];
+    }
   }
 };
 
-},{"../templates":15,"../utils":17}],11:[function(require,module,exports){
+},{"../templates":16,"../utils":18}],11:[function(require,module,exports){
+var parser, templates, utils;
+
+utils = require('../utils');
+
+parser = (require('../parser')).douban;
+
+templates = (require('../templates')).douban;
+
 module.exports = {
+  queryItem: function(bookId) {
+    var dfd;
+    dfd = new $.Deferred;
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url: templates.queryItem(bookId),
+      onload: function(resp) {
+        var bookMeta, content;
+        if (resp.status !== 200) {
+          dfd.resolve;
+          return;
+        }
+        content = utils.clean(resp.responseText);
+        bookMeta = parser.parseBookItemPage($(content).filter('div#wrapper'));
+        return dfd.reject(bookMeta);
+      }
+    });
+    return dfd.promise();
+  }
+};
+
+},{"../parser":9,"../templates":16,"../utils":18}],12:[function(require,module,exports){
+module.exports = {
+  douban: require('./douban'),
   library: require('./library'),
   local: require('./local')
 };
 
-},{"./library":12,"./local":13}],12:[function(require,module,exports){
+},{"./douban":11,"./library":13,"./local":14}],13:[function(require,module,exports){
 var parser, publisherFilterFactory, queryFactory, templates, utils;
 
 parser = (require('../parser')).library;
@@ -352,7 +431,7 @@ module.exports = {
   }
 };
 
-},{"../parser":9,"../templates":15,"../utils":17}],13:[function(require,module,exports){
+},{"../parser":9,"../templates":16,"../utils":18}],14:[function(require,module,exports){
 var config, utils;
 
 utils = require('../utils');
@@ -383,7 +462,7 @@ module.exports = {
   }
 };
 
-},{"../config":1,"../utils":17}],14:[function(require,module,exports){
+},{"../config":1,"../utils":18}],15:[function(require,module,exports){
 var libraryTmpl;
 
 libraryTmpl = require('./library');
@@ -401,16 +480,19 @@ module.exports = {
     foundMultiple: function(infos) {
       return "<span class=\"pl\">GDUT:</span> \n<a href=\"" + infos.queryUrl + "\" target=\"_blank\">找到 " + infos.results.length + " 本类似的</a>";
     }
+  },
+  queryItem: function(bookId) {
+    return "http://book.douban.com/subject/" + bookId + "/";
   }
 };
 
-},{"./library":16}],15:[function(require,module,exports){
+},{"./library":17}],16:[function(require,module,exports){
 module.exports = {
   library: require('./library'),
   douban: require('./douban')
 };
 
-},{"./douban":14,"./library":16}],16:[function(require,module,exports){
+},{"./douban":15,"./library":17}],17:[function(require,module,exports){
 var config;
 
 config = require('../config');
@@ -430,7 +512,7 @@ module.exports = {
   }
 };
 
-},{"../config":1}],17:[function(require,module,exports){
+},{"../config":1}],18:[function(require,module,exports){
 var config, utils;
 
 config = require('./config');
@@ -500,4 +582,4 @@ module.exports = utils = {
   }
 };
 
-},{"./config":1}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17])
+},{"./config":1}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18])

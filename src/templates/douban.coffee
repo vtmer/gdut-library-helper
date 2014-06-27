@@ -27,3 +27,6 @@ module.exports =
       <span class="pl">GDUT:</span> 
       <a href="#{infos.queryUrl}" target="_blank">找到 #{infos.results.length} 本类似的</a>
       """
+
+  queryItem: (bookId) ->
+    "http://book.douban.com/subject/#{bookId}/"

@@ -51,3 +51,8 @@ module.exports =
       return
 
     return (@parseQueryResult result for result in $page('tbody tr'))
+
+  parseDoubanReference: ->
+    bookId = /douban_ref=(.*)/.exec(document.URL)
+    if bookId
+      return bookId[1]

@@ -1,5 +1,5 @@
 # query/library.coffee
-# 图书馆查询借口
+# 图书馆查询接口
 
 
 parser = (require '../parser').library
