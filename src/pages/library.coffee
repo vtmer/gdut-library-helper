@@ -18,7 +18,7 @@ class RecommendHandler extends BasePageHandler
 
   handle: ->
     doubanBookId = parser.parseDoubanReference()
-    return if not doubanBookId
+    return unless doubanBookId
 
     doubanQuery.queryItem(doubanBookId)
       .fail(@inject)

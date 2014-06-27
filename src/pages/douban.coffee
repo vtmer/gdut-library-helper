@@ -26,10 +26,10 @@ class BookItemHandler extends DoubanPageHandler
   injectFail: (bookInfos, bookMeta) ->
     $info = ($ '#info')
  
-    if not bookInfos
-      $info.append(templates.subject.notFound bookMeta)
-    else
+    if bookInfos
       $info.append(templates.subject.foundMultiple bookInfos)
+    else
+      $info.append(templates.subject.notFound bookMeta)
 
   handle: ->
     bookMeta = parser.parseBookItemPage($ 'body')
@@ -49,10 +49,10 @@ class BookItemHandler extends DoubanPageHandler
 class SearchHandler extends DoubanPageHandler
 
   inject: (infos) ->
-    if not infos
-      tmpl = templates.subjectSearch.notFound()
-    else
+    if infos
       tmpl = templates.subjectSearch.result infos
+    else
+      tmpl = templates.subjectSearch.notFound()
 
     $(tmpl).insertBefore($ '#content .aside .mb20')
 

@@ -15,5 +15,5 @@
 // ==/UserScript==
 `
 
-# 开始执行助手
+# 助手开始执行
 (require './helper').dispatch()

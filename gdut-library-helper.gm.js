@@ -131,10 +131,10 @@ BookItemHandler = (function(_super) {
   BookItemHandler.prototype.injectFail = function(bookInfos, bookMeta) {
     var $info;
     $info = $('#info');
-    if (!bookInfos) {
-      return $info.append(templates.subject.notFound(bookMeta));
-    } else {
+    if (bookInfos) {
       return $info.append(templates.subject.foundMultiple(bookInfos));
+    } else {
+      return $info.append(templates.subject.notFound(bookMeta));
     }
   };
 
@@ -169,10 +169,10 @@ SearchHandler = (function(_super) {
 
   SearchHandler.prototype.inject = function(infos) {
     var tmpl;
-    if (!infos) {
-      tmpl = templates.subjectSearch.notFound();
-    } else {
+    if (infos) {
       tmpl = templates.subjectSearch.result(infos);
+    } else {
+      tmpl = templates.subjectSearch.notFound();
     }
     return $(tmpl).insertBefore($('#content .aside .mb20'));
   };
