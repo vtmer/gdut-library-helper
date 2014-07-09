@@ -48,7 +48,7 @@ v0.2.1 加入
 
 #### 方案二：
 
-安装 [Chrome 插件](gdut_library_helper.crx)，因为暂时还未在 Chrome Web Store 上
+安装 [Chrome 插件](gdut-library-helper.crx)，因为暂时还未在 Chrome Web Store 上
 架，所以先手拖到 chrome://extensions 安装吧 :)
 
 
