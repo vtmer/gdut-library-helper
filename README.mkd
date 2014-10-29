@@ -94,7 +94,7 @@ v0.3.2 添加 Changelog
 
 [@hbc](http://www.douban.com/people/minihbc)
 
-[维生数工作室](http://vtmerhome.com/)
+[维生数工作室](http://vtmer.com/)
 
 [关注我们的微博](http://weibo.com/vtmer)
 
