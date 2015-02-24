@@ -77,6 +77,8 @@ Happy hacking. :)
 
 ## Changelog
 
+v0.6.0 修复馆藏信息不正确的问题
+
 v0.5.0 使用 [coffeescript](http://coffeescript.org/) 重写了脚本
 
 v0.4.0 添加豆列查询馆藏位置功能
@@ -92,7 +94,7 @@ v0.3.2 添加 Changelog
 
 [@linkkingjay](https://github.com/linkkingjay)
 
-[@hbc](http://www.douban.com/people/minihbc)
+[@hbc](https://github.com/bcho)
 
 [维生数工作室](http://vtmer.com/)
 

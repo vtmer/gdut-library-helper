@@ -34,6 +34,11 @@ class BookItemHandler extends DoubanPageHandler
   handle: ->
     bookMeta = parser.parseBookItemPage($ 'body')
 
+    inject = (bookInfos) =>
+      # 查询图书馆馆藏信息
+      query.library.ctrlNo(bookInfos)
+        .always((updatedBookInfos) => @inject(updatedBookInfos, bookMeta))
+
     # 先尝试查询本地缓存
     query.local.bookId(@itemKey(bookMeta))
       # 查询失败，根据 isbn 查询
@@ -43,7 +48,7 @@ class BookItemHandler extends DoubanPageHandler
       # 查询失败，显示失败信息
       .then((bookInfos) => @injectFail(bookInfos, bookMeta))
       # (任意一个) 查询成功，显示图书信息
-      .fail((bookInfos) => @inject(bookInfos, bookMeta))
+      .fail(inject)
 
 
 class SearchHandler extends DoubanPageHandler
