@@ -5,6 +5,9 @@ config = require '../config'
 
 
 module.exports =
+  queryCtrlNoURLBuilder: (ctrlNo) ->
+    "#{config.libraryBaseUrl}/bookinfo.aspx?ctrlno=#{ctrlNo}"
+
   queryISBNURLBuilder: (isbn) ->
     "#{config.libraryBaseUrl}/searchresult.aspx?dp=50&isbn_f=#{isbn}"
 

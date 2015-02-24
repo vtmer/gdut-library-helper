@@ -139,8 +139,15 @@ BookItemHandler = (function(_super) {
   };
 
   BookItemHandler.prototype.handle = function() {
-    var bookMeta;
+    var bookMeta, inject;
     bookMeta = parser.parseBookItemPage($('body'));
+    inject = (function(_this) {
+      return function(bookInfos) {
+        return query.library.ctrlNo(bookInfos).always(function(updatedBookInfos) {
+          return _this.inject(updatedBookInfos, bookMeta);
+        });
+      };
+    })(this);
     return query.local.bookId(this.itemKey(bookMeta)).then(function() {
       return query.library.isbn(bookMeta);
     }).then(function() {
@@ -149,11 +156,7 @@ BookItemHandler = (function(_super) {
       return function(bookInfos) {
         return _this.injectFail(bookInfos, bookMeta);
       };
-    })(this)).fail((function(_this) {
-      return function(bookInfos) {
-        return _this.inject(bookInfos, bookMeta);
-      };
-    })(this));
+    })(this)).fail(inject);
   };
 
   return BookItemHandler;
@@ -362,13 +365,35 @@ module.exports = {
 },{"../utils":18}],9:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
 },{"./douban":8,"./library":10}],10:[function(require,module,exports){
-var templates, utils;
+var query, templates, utils;
 
 utils = require('../utils');
 
 templates = (require('../templates')).library;
 
-module.exports = {
+module.exports = query = {
+  parseBookInfo: function($content) {
+    var $books, book, bookInfos, isAvailable;
+    $books = $('#bardiv .tb tbody>tr', $content);
+    isAvailable = function(col) {
+      return ($('td:nth(5)', col)).text().trim() === '可供出借';
+    };
+    bookInfos = {
+      remains: ((function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = $books.length; _i < _len; _i++) {
+          book = $books[_i];
+          if (isAvailable(book)) {
+            _results.push(book);
+          }
+        }
+        return _results;
+      })()).length,
+      total: $books.length
+    };
+    return bookInfos;
+  },
   parseQueryResult: function($content) {
     var $cols, bookInfos, ctrlno, getColText, i;
     $cols = (function() {
@@ -415,10 +440,10 @@ module.exports = {
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         result = _ref[_i];
-        _results.push(this.parseQueryResult(result));
+        _results.push(query.parseQueryResult(result));
       }
       return _results;
-    }).call(this);
+    })();
   },
   parseDoubanReference: function() {
     var bookId;
@@ -468,7 +493,7 @@ module.exports = {
 };
 
 },{"./douban":11,"./library":13,"./local":14}],13:[function(require,module,exports){
-var parser, publisherFilterFactory, queryFactory, templates, utils;
+var alwaysFailFilter, alwaysSuccessFilter, parser, publisherFilterFactory, queryFactory, templates, utils;
 
 parser = (require('../parser')).library;
 
@@ -476,7 +501,13 @@ templates = (require('../templates')).library;
 
 utils = require('../utils');
 
-queryFactory = function(queryUrlBuilder, filter) {
+queryFactory = function(queryUrlBuilder, filter, respParser) {
+  if (respParser == null) {
+    respParser = null;
+  }
+  if (!respParser) {
+    respParser = parser.parseQueryResults;
+  }
   return function(queryValue) {
     var dfd, queryUrl;
     dfd = new $.Deferred;
@@ -486,7 +517,7 @@ queryFactory = function(queryUrlBuilder, filter) {
       url: queryUrl,
       onload: function(resp) {
         var parsedResults, result;
-        parsedResults = parser.parseQueryResults(resp.responseText);
+        parsedResults = respParser(resp.responseText);
         if (!parsedResults) {
           dfd.resolve(parsedResults);
           return;
@@ -519,13 +550,19 @@ publisherFilterFactory = function(bookMeta) {
   };
 };
 
+alwaysSuccessFilter = function(base, candidate) {
+  return candidate;
+};
+
+alwaysFailFilter = function() {
+  return null;
+};
+
 module.exports = {
   keyword: function(keyword) {
     var dfd, keywordQuery;
     dfd = new $.Deferred;
-    keywordQuery = queryFactory(templates.queryKeywordURLBuilder, function() {
-      return null;
-    });
+    keywordQuery = queryFactory(templates.queryKeywordURLBuilder, alwaysFailFilter);
     utils.convertGB2312(keyword).then(keywordQuery).always(dfd.resolve);
     return dfd.promise();
   },
@@ -543,6 +580,23 @@ module.exports = {
     isbnQuery(bookMeta.isbn10).then(function() {
       return isbnQuery(bookMeta.isbn13);
     }).then(dfd.resolve).fail(dfd.reject);
+    return dfd.promise();
+  },
+  ctrlNo: function(bookMeta) {
+    var ctrlNoQuery, dfd, mergeCollection;
+    dfd = new $.Deferred;
+    if (!bookMeta.ctrlno) {
+      dfd.reject(bookMeta);
+    }
+    ctrlNoQuery = queryFactory(templates.queryCtrlNoURLBuilder, alwaysSuccessFilter, parser.parseBookInfo);
+    mergeCollection = function(bookColl) {
+      return $.extend({}, bookMeta, bookColl);
+    };
+    ctrlNoQuery(bookMeta.ctrlno).then(function() {
+      return dfd.resolve(bookMeta);
+    }).fail(function(bookColl) {
+      return dfd.reject(mergeCollection(bookColl));
+    });
     return dfd.promise();
   }
 };
@@ -627,6 +681,9 @@ var config;
 config = require('../config');
 
 module.exports = {
+  queryCtrlNoURLBuilder: function(ctrlNo) {
+    return "" + config.libraryBaseUrl + "/bookinfo.aspx?ctrlno=" + ctrlNo;
+  },
   queryISBNURLBuilder: function(isbn) {
     return "" + config.libraryBaseUrl + "/searchresult.aspx?dp=50&isbn_f=" + isbn;
   },
@@ -721,4 +778,4 @@ module.exports = utils = {
   }
 };
 
-},{"./config":1}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18])
+},{"./config":1}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]);

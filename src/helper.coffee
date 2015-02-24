@@ -17,7 +17,7 @@ module.exports = helper =
   dispatch: ->
     matched = /[com, 81]\/([\w]+)\/*/.exec document.URL
     pageName = if matched is null then 'index' else matched[1].trim()
-    
+
     utils.log "Processing #{pageName}."
     switch pageName
       # Douban 相关页面

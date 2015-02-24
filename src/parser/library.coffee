@@ -5,7 +5,22 @@ utils = require '../utils'
 templates = (require '../templates').library
 
 
-module.exports =
+module.exports = query =
+
+  # 解析 http://222.200.98.171:81/bookinfo.aspx?ctrlno={ctrlno} 的书籍详情
+  # @return object
+  #   remains:    剩余数
+  #   total:      总数
+  parseBookInfo: ($content) ->
+    $books = ($ '#bardiv .tb tbody>tr', $content)
+
+    isAvailable = (col) -> ($ 'td:nth(5)', col).text().trim() == '可供出借'
+
+    bookInfos =
+      remains: (book for book in $books when isAvailable(book)).length
+      total: $books.length
+
+    return bookInfos
 
   # 解析 http://222.200.98.171:81/searchresult.aspx 返回的单条查询结果
   # @return object
@@ -50,7 +65,7 @@ module.exports =
     if $page('#searchnotfound').length isnt 0
       return
 
-    return (@parseQueryResult result for result in $page('tbody tr'))
+    return (query.parseQueryResult result for result in $page('tbody tr'))
 
   parseDoubanReference: ->
     bookId = /douban_ref=(.*)/.exec(document.URL)
